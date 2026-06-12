@@ -4,7 +4,9 @@ TinyRT is a lightweight, high-performance inference engine written in modern C++
 
 ## Features
 
-- **Dense/MLP Layers** - Full support for fully connected neural network layers
+- **MLP Layer Abstraction** - Simplified API for building stacked fully connected networks without manual sequencing
+- **CNN Layer Abstraction** - High-level interface for composing multi-layer convolutional networks
+- **Dense/MLP Layers** - Full support for fully connected neural network layers with multiple activation functions
 - **2D Convolution** - Efficient 2D convolutional operations (1D convolution can be performed via 2D)
 - **Activation Functions** - Comprehensive set of activation functions:
   - ReLU, LeakyReLU, ReLU6
@@ -24,6 +26,8 @@ TinyRT is a lightweight, high-performance inference engine written in modern C++
 - **tensor_access.hpp/cpp** - Direct tensor data access and indexing functions
 - **ops.hpp/cpp** - Core neural network operations (linear algebra, activations)
 - **conv2d.hpp/cpp** - 2D convolution implementation
+- **mlp.hpp/cpp** - MLP network abstraction for layered fully connected networks
+- **cnn.hpp/cpp** - CNN network abstraction for layered convolutional networks
 - **test.hpp/cpp** - Comprehensive test suite for validation
 
 ## Building
@@ -56,7 +60,52 @@ clang++ -std=c++17 -g -o main main.cpp test.cpp arena.cpp tensor_factory.cpp ten
 
 ## Usage Example
 
-### MLP (Dense Layer) Inference
+### MLP Network with Abstraction (Recommended)
+
+```cpp
+#include "arena.hpp"
+#include "mlp.hpp"
+#include "tensor_factory.hpp"
+
+using namespace TensorFactory;
+
+// Create memory arena
+unsigned char buffer[2048];
+Arena arena;
+arena.init(buffer, 2048);
+
+// Create a 2-layer MLP network
+MLPNetwork mlp(2);
+
+// Setup Layer 1: 2 inputs -> 3 hidden units with ReLU
+Tensor W1 = Create2D(arena, 2, 3);
+Fill(W1, (float[]){1, 2, 3, 4, 5, 6});
+
+Tensor B1 = Create2D(arena, 1, 3);
+Fill(B1, (float[]){0, 0, 0});
+
+mlp.InitLayer(0, W1, B1, ActivationType::ReLU);
+
+// Setup Layer 2: 3 hidden units -> 1 output (linear)
+Tensor W2 = Create2D(arena, 3, 1);
+Fill(W2, (float[]){1, 2, 3});
+
+Tensor B2 = Create2D(arena, 1, 1);
+Fill(B2, (float[]){0});
+
+mlp.InitLayer(1, W2, B2, ActivationType::None);
+
+// Forward pass through entire network
+Tensor input = Create2D(arena, 1, 2);
+Fill(input, (float[]){1.0f, 2.0f});
+
+Tensor output = Create2D(arena, 1, 1);
+mlp.forward(input, output, arena);
+
+Print(output);
+```
+
+### MLP (Dense Layer) - Low-level Interface
 
 ```cpp
 #include "arena.hpp"
@@ -92,7 +141,64 @@ ReLU(h, h);
 Print(h);
 ```
 
-### 2D Convolution
+### CNN Network with Abstraction (Recommended)
+
+```cpp
+#include "arena.hpp"
+#include "cnn.hpp"
+#include "tensor_factory.hpp"
+
+using namespace TensorFactory;
+
+// Create memory arena
+unsigned char buffer[4096];
+Arena arena;
+arena.init(buffer, 4096);
+
+// Create a 2-layer CNN
+CNNNetwork cnn(2);
+
+// Layer 1: 3x3 kernel, 1 input channel, 16 output channels with ReLU
+float weights1[9 * 16] = {...};  // 3x3x1x16 weights
+float bias1[16] = {...};
+
+cnn.InitLayer(0,
+              3,          // kernel_size
+              1,          // stride
+              1,          // in_channels
+              16,         // out_channels
+              weights1,
+              bias1,
+              ConvActivationType::ReLU);
+
+// Layer 2: 1x1 kernel, 16 input channels, 32 output channels with ReLU
+float weights2[1 * 1 * 16 * 32] = {...};
+float bias2[32] = {...};
+
+cnn.InitLayer(1,
+              1,          // kernel_size
+              1,          // stride
+              16,         // in_channels
+              32,         // out_channels
+              weights2,
+              bias2,
+              ConvActivationType::ReLU);
+
+// Create input tensor (HWC format)
+Tensor input;
+input.data = input_data;  // Your input data
+input.rank = 3;
+input.shape[0] = 32;  // height
+input.shape[1] = 32;  // width
+input.shape[2] = 1;   // channels
+
+// Forward pass through entire network
+Tensor& output = cnn.forward(input, arena);
+
+Print(output);
+```
+
+### 2D Convolution - Low-level Interface
 
 ```cpp
 #include "conv2d.hpp"
@@ -134,18 +240,51 @@ conv.forward(input, output);
 
 ```
 tinyrt/
-├── arena.hpp/cpp           # Memory management
-├── tensor.hpp              # Tensor definitions
-├── tensor_factory.hpp/cpp  # Tensor utilities
-├── tensor_access.hpp/cpp   # Tensor access functions
-├── ops.hpp/cpp             # Neural network operations
-├── conv2d.hpp/cpp          # 2D convolution
-├── test.hpp/cpp            # Test suite
-├── main.cpp                # Entry point
+├── include/
+│   ├── arena.hpp           # Memory management
+│   ├── tensor.hpp          # Tensor definitions
+│   ├── tensor_factory.hpp  # Tensor utilities
+│   ├── tensor_access.hpp   # Tensor access functions
+│   ├── ops.hpp             # Neural network operations
+│   ├── conv2d.hpp          # 2D convolution (low-level)
+│   ├── mlp.hpp             # MLP network abstraction
+│   ├── cnn.hpp             # CNN network abstraction
+│   ├── inference.hpp       # Inference utilities
+│   └── test.hpp            # Test suite
+├── src/
+│   ├── main.cpp            # Entry point
+│   ├── arena.cpp           # Memory management implementation
+│   ├── tensor_factory.cpp  # Tensor utilities implementation
+│   ├── tensor_access.cpp   # Tensor access implementation
+│   ├── ops.cpp             # Operations implementation
+│   ├── conv2d.cpp          # 2D convolution implementation
+│   ├── mlp.cpp             # MLP network implementation
+│   ├── cnn.cpp             # CNN network implementation
+│   ├── inference.cpp       # Inference utilities implementation
+│   └── test.cpp            # Test suite implementation
 ├── Makefile                # Build configuration
 ├── .gitignore              # Git ignore rules
 └── README.md               # This file
 ```
+
+## Layer Abstractions
+
+### MLPNetwork
+Simplifies building stacked fully connected layers:
+- **`InitLayer(idx, weights, bias, activation, alpha)`** - Configure a dense layer
+- **`forward(input, output, arena)`** - Run forward pass through all layers
+- **`GetLayer(idx)`** - Access individual layer configuration
+
+Supported activations: `None`, `ReLU`, `Sigmoid`, `Tanh`, `LeakyReLU`, `ReLU6`, `Softmax`
+
+### CNNNetwork
+Simplifies building stacked convolutional layers:
+- **`InitLayer(idx, kernel_size, stride, in_channels, out_channels, weights, bias, activation, alpha)`** - Configure a conv layer
+- **`forward(input, arena)`** - Run forward pass through all layers (returns output tensor reference)
+- **`GetLayer(idx)`** - Access individual layer configuration
+- **`GetOutput()`** - Get the final output tensor
+
+Automatically calculates output dimensions and manages intermediate tensors.
 
 ## Supported Operations
 
