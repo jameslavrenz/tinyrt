@@ -482,14 +482,16 @@ ReLU helps because:
 An MLP is:
 
 1. A chain of affine transforms:
-   $$
-   Wx + b
-   $$
+   
+$$
+Wx + b
+$$
 
 2. Interleaved with nonlinearities:
-   $$
-   \sigma(\cdot)
-   $$
+
+$$
+\sigma(\cdot)
+$$
 
 3. Trained using:
    - chain rule
