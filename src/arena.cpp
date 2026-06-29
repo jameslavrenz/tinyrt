@@ -2,7 +2,7 @@
 
 void Arena::init(void* memory, std::size_t size)
 {
-    base = static_cast<unsigned char*>(memory);
+    base = static_cast<std::byte*>(memory);
     capacity = size;
     offset = 0;
 }

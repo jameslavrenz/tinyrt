@@ -1,6 +1,7 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
+#include <span>
 #include "tensor.hpp"
 
 namespace Inference
@@ -12,7 +13,7 @@ namespace Inference
     };
 
     bool BinaryClassify(const Tensor& output, float threshold = 0.5f);
-    void MultiLabelClassify(const Tensor& output, float threshold, uint8_t* labels);
+    void MultiLabelClassify(const Tensor& output, float threshold, std::span<uint8_t> labels);
     uint32_t ArgMax(const Tensor& output);
-    void TopK(const Tensor& A, TopKResult* results, uint32_t K);
+    void TopK(const Tensor& A, std::span<TopKResult> results, uint32_t K);
 }

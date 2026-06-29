@@ -1,6 +1,6 @@
 # TinyRT - Neural Network Inference Engine
 
-TinyRT is a lightweight, high-performance inference engine written in modern C++ (C++17/20) designed for neural network inference on microcontroller units (MCUs) and microprocessor units (MPUs). It provides an optimized runtime for deploying trained neural network models directly on resource-constrained embedded devices.
+TinyRT is a lightweight, high-performance inference engine written in modern C++ (C++26) designed for neural network inference on microcontroller units (MCUs) and microprocessor units (MPUs). It provides an optimized runtime for deploying trained neural network models directly on resource-constrained embedded devices.
 
 ## Features
 
@@ -15,6 +15,7 @@ TinyRT is a lightweight, high-performance inference engine written in modern C++
 - **Memory-Efficient Arena Allocator** - Custom memory management for embedded environments
 - **N-Dimensional Tensor Support** - Flexible tensor operations for various model architectures
 - **NHWC Layout** - Optimized for common embedded tensor memory layout
+- **Model Loader** - JSON architecture files with companion float32 `.bin` weight files
 
 ## Architecture
 
@@ -28,12 +29,14 @@ TinyRT is a lightweight, high-performance inference engine written in modern C++
 - **conv2d.hpp/cpp** - 2D convolution implementation
 - **mlp.hpp/cpp** - MLP network abstraction for layered fully connected networks
 - **cnn.hpp/cpp** - CNN network abstraction for layered convolutional networks
+- **json_parser.hpp/cpp** - Minimal JSON parser for model architecture files
+- **model_loader.hpp/cpp** - Load networks from JSON + `.bin` weight files
 - **test.hpp/cpp** - Comprehensive test suite for validation
 
 ## Building
 
 ### Requirements
-- C++17 or later compiler (clang++, g++, MSVC)
+- C++26 compiler (clang++ 17+, g++ 14+, or MSVC with `/std:c++latest`)
 - Make (for Unix-like systems)
 
 ### Build Commands
@@ -55,7 +58,7 @@ make run
 ### Manual Compilation
 
 ```bash
-clang++ -std=c++17 -g -Iinclude -o main src/main.cpp src/test.cpp src/arena.cpp src/tensor_factory.cpp src/tensor_access.cpp src/ops.cpp src/conv2d.cpp src/mlp.cpp src/cnn.cpp src/inference.cpp
+clang++ -std=c++26 -g -Iinclude -o main src/main.cpp src/test.cpp src/arena.cpp src/tensor_factory.cpp src/tensor_access.cpp src/ops.cpp src/conv2d.cpp src/mlp.cpp src/cnn.cpp src/inference.cpp src/json_parser.cpp src/model_loader.cpp
 ```
 
 ## Usage Example
@@ -79,25 +82,25 @@ MLPNetwork mlp(2, arena);
 
 // Setup Layer 1: 2 inputs -> 3 hidden units with ReLU
 Tensor W1 = Create2D(arena, 2, 3);
-Fill(W1, (float[]){1, 2, 3, 4, 5, 6});
+Fill(W1, {1, 2, 3, 4, 5, 6});
 
 Tensor B1 = Create2D(arena, 1, 3);
-Fill(B1, (float[]){0, 0, 0});
+Fill(B1, {0, 0, 0});
 
 mlp.InitLayer(0, W1, B1, ActivationType::ReLU);
 
 // Setup Layer 2: 3 hidden units -> 1 output (linear)
 Tensor W2 = Create2D(arena, 3, 1);
-Fill(W2, (float[]){1, 2, 3});
+Fill(W2, {1, 2, 3});
 
 Tensor B2 = Create2D(arena, 1, 1);
-Fill(B2, (float[]){0});
+Fill(B2, {0});
 
 mlp.InitLayer(1, W2, B2, ActivationType::None);
 
 // Forward pass through entire network
 Tensor input = Create2D(arena, 1, 2);
-Fill(input, (float[]){1.0f, 2.0f});
+Fill(input, {1.0f, 2.0f});
 
 Tensor output = Create2D(arena, 1, 1);
 mlp.forward(input, output, arena);
@@ -123,14 +126,14 @@ arena.init(buffer, 1024);
 
 // Create input tensor
 Tensor x = Create2D(arena, 1, 2);
-Fill(x, (float[]){1.0f, 2.0f});
+Fill(x, {1.0f, 2.0f});
 
 // Create weights and bias
 Tensor W = Create2D(arena, 2, 3);
-Fill(W, (float[]){1, 2, 3, 4, 5, 6});
+Fill(W, {1, 2, 3, 4, 5, 6});
 
 Tensor b = Create2D(arena, 1, 3);
-Fill(b, (float[]){0, 0, 0});
+Fill(b, {0, 0, 0});
 
 // Forward pass
 Tensor h = Create2D(arena, 1, 3);
@@ -236,6 +239,78 @@ conv.bias = bias;
 conv.forward(input, output);
 ```
 
+### Loading a Model from JSON + Weights
+
+Models are defined by a pair of files with the same base name:
+
+- `model.json` — network architecture
+- `model.bin` — raw float32 weights in layer order (weights then bias per layer)
+
+**MLP example** (`models/test_mlp.json`):
+
+```json
+{
+  "version": 1,
+  "network": "mlp",
+  "input": [1, 2],
+  "layers": [
+    { "type": "dense", "units": 2, "activation": "relu" },
+    { "type": "dense", "units": 2, "activation": "none" }
+  ]
+}
+```
+
+**CNN example** (`models/test_cnn.json`):
+
+```json
+{
+  "version": 1,
+  "network": "cnn",
+  "input": [2, 2, 2],
+  "layers": [
+    { "type": "conv2d", "kernel_size": 1, "stride": 1, "filters": 1, "activation": "relu" },
+    { "type": "conv2d", "kernel_size": 1, "stride": 1, "filters": 2, "activation": "none" }
+  ]
+}
+```
+
+**Binary weight layout**
+
+- **Dense layer**: `W[in_features × out_features]` row-major, then `b[out_features]`
+- **Conv2D layer**: `W[out × kernel × kernel × in_channels]` (same layout as `Conv2D`), then `b[out_channels]`
+
+**C++ usage**:
+
+```cpp
+#include "arena.hpp"
+#include "model_loader.hpp"
+#include "tensor_factory.hpp"
+
+unsigned char buffer[8192];
+Arena arena;
+arena.init(buffer, 8192);
+
+MLPNetwork* network = nullptr;
+std::array<uint32_t, kMaxTensorRank> input_shape{};
+uint32_t input_rank = 0;
+
+ModelLoader::LoadResult result =
+    ModelLoader::LoadMLP("models/test_mlp.json", arena, network, input_shape, input_rank);
+
+if (result.status == ModelLoader::LoadStatus::Ok)
+{
+    Tensor input = TensorFactory::Create2D(arena, input_shape[0], input_shape[1]);
+    TensorFactory::Fill(input, {1.0f, 2.0f});
+
+    Tensor output = TensorFactory::Create2D(arena, 1, network->GetLayer(1).weights.shape[1]);
+    network->forward(input, output, arena);
+}
+```
+
+Use `ModelLoader::LoadCNN()` for convolutional models, or `ModelLoader::Load()` to auto-detect the network type from JSON.
+
+Supported activations in JSON: `none`, `relu`, `sigmoid`, `tanh`, `leaky_relu`, `relu6`, `softmax`. Optional `"alpha"` field for `leaky_relu`.
+
 ## Project Structure
 
 ```
@@ -249,8 +324,17 @@ tinyrt/
 │   ├── conv2d.hpp          # 2D convolution (low-level)
 │   ├── mlp.hpp             # MLP network abstraction
 │   ├── cnn.hpp             # CNN network abstraction
+│   ├── json_parser.hpp     # Minimal JSON parser
+│   ├── model_loader.hpp    # JSON + .bin model loader
 │   ├── inference.hpp       # Inference utilities
 │   └── test.hpp            # Test suite
+├── models/
+│   ├── test_mlp.json                  # 2-layer MLP test model
+│   ├── test_mlp.bin
+│   ├── test_cnn.json                  # 2-layer CNN test model
+│   ├── test_cnn.bin
+│   ├── cnn_4x4_single.json            # Single-layer 3x3 conv on 4x4 input
+│   └── cnn_4x4_single.bin
 ├── src/
 │   ├── main.cpp            # Entry point
 │   ├── arena.cpp           # Memory management implementation
@@ -260,6 +344,8 @@ tinyrt/
 │   ├── conv2d.cpp          # 2D convolution implementation
 │   ├── mlp.cpp             # MLP network implementation
 │   ├── cnn.cpp             # CNN network implementation
+│   ├── json_parser.cpp     # JSON parser implementation
+│   ├── model_loader.cpp    # Model loader implementation
 │   ├── inference.cpp       # Inference utilities implementation
 │   └── test.cpp            # Test suite implementation
 ├── Makefile                # Build configuration
@@ -310,6 +396,14 @@ Simplifies building stacked convolutional layers:
 
 Automatically calculates output dimensions and manages intermediate tensors.
 
+### ModelLoader
+Load a trained network from disk:
+- **`JsonPathToBinPath(json_path, bin_path, capacity)`** — Derive companion `.bin` path from `.json` path
+- **`LoadWeightsBin(json_path, arena, weights, float_count)`** — Load float32 weights into arena
+- **`LoadMLP(json_path, arena, network, input_shape, input_rank)`** — Parse JSON and build an MLP
+- **`LoadCNN(json_path, arena, network, input_shape, input_rank)`** — Parse JSON and build a CNN
+- **`Load(json_path, arena, kind, mlp, cnn, input_shape, input_rank)`** — Auto-detect network type
+
 ## Supported Operations
 
 ### Arithmetic
@@ -334,7 +428,7 @@ Automatically calculates output dimensions and manages intermediate tensors.
 - **Memory-Conscious** - Arena allocator throughout; no dynamic heap allocation in layer abstractions
 - **Single-Threaded** - No parallelization overhead (suitable for MCUs)
 - **Inference-Only** - Optimized for deployment, not training
-- **Type-Safe** - Modern C++ with strong typing
+- **Type-Safe** - Modern C++26 with strong typing (`std::array`, `std::span`)
 
 ## Roadmap
 
@@ -358,9 +452,11 @@ Run the comprehensive test suite:
 make run
 ```
 
-Tests include:
-- MLP forward pass validation
-- 2D convolution with various channel configurations
+Tests load architecture and weights from `models/*.json` + companion `.bin` files (no hardcoded network data in source). Coverage includes:
+
+- MLP 2-layer forward pass (`test_mlp.json`)
+- CNN 2-layer forward pass — channel stacking (`test_cnn.json`)
+- CNN single-layer 3×3 conv on 4×4 input (`cnn_4x4_single.json`)
 - Multi-channel to single-channel convolution
 - Multi-channel to multi-channel convolution
 

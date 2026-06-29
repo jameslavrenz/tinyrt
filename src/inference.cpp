@@ -8,7 +8,7 @@ namespace Inference
         return p[0] > threshold;
     }
 
-    void MultiLabelClassify(const Tensor& output, float threshold, uint8_t* labels)
+    void MultiLabelClassify(const Tensor& output, float threshold, std::span<uint8_t> labels)
     {
         const float* p = static_cast<const float*>(output.data);
 
@@ -37,7 +37,7 @@ namespace Inference
         return idx;
     }
 
-    void TopK(const Tensor& A, TopKResult* results, uint32_t K)
+    void TopK(const Tensor& A, std::span<TopKResult> results, uint32_t K)
     {
         const float* a = static_cast<const float*>(A.data);
         const uint32_t n = A.num_elements;

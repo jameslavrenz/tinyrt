@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <cstdint>
 
 enum class DataType : uint8_t
@@ -17,8 +18,8 @@ struct Tensor
     DataType type;
 
     uint32_t rank;
-    uint32_t shape[kMaxTensorRank];
-    uint32_t stride[kMaxTensorRank];
+    std::array<uint32_t, kMaxTensorRank> shape{};
+    std::array<uint32_t, kMaxTensorRank> stride{};
     uint32_t num_elements;
     uint32_t bytes;
 };

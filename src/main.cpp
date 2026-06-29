@@ -1,12 +1,11 @@
 #include "test.hpp"
+#include <iostream>
 
 int main()
 {
-    test_mlp_abstraction();
-    test_cnn_abstraction();
+    std::cout << std::unitbuf;
+
     test_mlp();
-    cnn_test();
-    multi_in_single_out_channel_cnn_test();
-    multi_in_multi_out_channel_cnn_test();
+    test_cnn();
     return 0;
 }

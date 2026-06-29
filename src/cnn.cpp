@@ -2,6 +2,7 @@
 #include "ops.hpp"
 #include "tensor_factory.hpp"
 #include "tensor_access.hpp"
+#include <array>
 #include <cmath>
 
 using namespace Ops;
@@ -56,9 +57,8 @@ static uint32_t CalcConvOutputDim(uint32_t input_dim, int kernel_size, int strid
 CNNNetwork::CNNNetwork(uint32_t num_layers, Arena& arena)
     : num_layers(num_layers), arena(arena)
 {
-    // Allocate from Arena - MCU-safe, no heap fragmentation
-    layers = (Conv2DLayer*)arena.alloc(sizeof(Conv2DLayer) * num_layers);
-    intermediate_outputs = (Tensor*)arena.alloc(sizeof(Tensor) * num_layers);
+    layers = static_cast<Conv2DLayer*>(arena.alloc(sizeof(Conv2DLayer) * num_layers));
+    intermediate_outputs = static_cast<Tensor*>(arena.alloc(sizeof(Tensor) * num_layers));
 }
 
 // No destructor - Arena manages all memory automatically
@@ -105,8 +105,7 @@ Tensor& CNNNetwork::forward(const Tensor& input, Arena& arena)
                                             layers[i].conv.stride);
         uint32_t out_c = layers[i].conv.out_channels;
 
-        // Create output tensor
-        uint32_t shape[3] = {out_h, out_w, out_c};
+        const std::array<uint32_t, 3> shape = {out_h, out_w, out_c};
         intermediate_outputs[i] = CreateND(arena, 3, shape);
 
         // Forward pass through this layer

@@ -1,25 +1,44 @@
 #include "tensor_factory.hpp"
+#include <iomanip>
 
 namespace TensorFactory
 {
     void Print(const Tensor& t)
     {
-        const float* p = static_cast<const float*>(t.data);
+        PrintLabeled("Tensor", t);
+    }
 
-        std::cout << "Tensor shape: [";
+    void PrintLabeled(const char* label, const Tensor& t)
+    {
+        std::cout << label << ": shape=[";
+
         for (uint32_t i = 0; i < t.rank; i++)
         {
             std::cout << t.shape[i];
-            if (i + 1 < t.rank) std::cout << ", ";
+            if (i + 1 < t.rank)
+                std::cout << ", ";
         }
-        std::cout << "]\n";
 
-        std::cout << "Values: ";
-        for (uint32_t i = 0; i < t.num_elements; i++)
+        std::cout << "] values=[";
+
+        if (!t.data || t.num_elements == 0)
         {
-            std::cout << p[i] << " ";
+            std::cout << "empty";
         }
-        std::cout << "\n";
+        else
+        {
+            const float* p = static_cast<const float*>(t.data);
+            std::cout << std::fixed << std::setprecision(4);
+
+            for (uint32_t i = 0; i < t.num_elements; i++)
+            {
+                if (i > 0)
+                    std::cout << ", ";
+                std::cout << p[i];
+            }
+        }
+
+        std::cout << "]\n" << std::flush;
     }
 
     Tensor Create2D(Arena& arena, uint32_t rows, uint32_t cols)
@@ -43,7 +62,7 @@ namespace TensorFactory
         return t;
     }
 
-    Tensor CreateND(Arena& arena, uint32_t rank, const uint32_t* shape)
+    Tensor CreateND(Arena& arena, uint32_t rank, std::span<const uint32_t> shape)
     {
         Tensor t;
 
@@ -59,7 +78,7 @@ namespace TensorFactory
         }
 
         uint32_t stride_val = 1;
-        for (int i = rank - 1; i >= 0; i--)
+        for (int i = static_cast<int>(rank) - 1; i >= 0; i--)
         {
             t.stride[i] = stride_val;
             stride_val *= shape[i];
@@ -73,13 +92,33 @@ namespace TensorFactory
         return t;
     }
 
-    void Fill(Tensor& t, const float* values)
+    Tensor View2D(float* data, uint32_t rows, uint32_t cols)
+    {
+        Tensor t{};
+
+        t.data = data;
+        t.type = DataType::Float32;
+        t.rank = 2;
+        t.shape[0] = rows;
+        t.shape[1] = cols;
+        t.stride[0] = cols;
+        t.stride[1] = 1;
+        t.num_elements = rows * cols;
+        t.bytes = t.num_elements * sizeof(float);
+
+        return t;
+    }
+
+    void Fill(Tensor& t, std::initializer_list<float> values)
     {
         float* p = static_cast<float*>(t.data);
 
-        for (uint32_t i = 0; i < t.num_elements; i++)
+        uint32_t i = 0;
+        for (float v : values)
         {
-            p[i] = values[i];
+            if (i >= t.num_elements)
+                break;
+            p[i++] = v;
         }
     }
 }

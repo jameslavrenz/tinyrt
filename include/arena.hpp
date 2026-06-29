@@ -3,7 +3,7 @@
 #include <cstdint>
 
 struct Arena {
-    unsigned char* base;
+    std::byte* base{};
     std::size_t capacity;
     std::size_t offset;
 
