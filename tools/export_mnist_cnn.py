@@ -42,9 +42,9 @@ NUM_CLASSES = 10
 NUM_CASES = 10
 SEED = 42
 
-EPOCHS = 10
+EPOCHS = 20
 BATCH_SIZE = 128
-TRAIN_LIMIT = 15000
+TRAIN_LIMIT = 0  # 0 = full 60k training set
 LEARNING_RATE = 0.001
 ADAM_BETA1 = 0.9
 ADAM_BETA2 = 0.999
@@ -334,6 +334,8 @@ def train(x_train: np.ndarray, y_train: np.ndarray) -> dict[str, np.ndarray]:
         x_train = x_train[:TRAIN_LIMIT]
         y_train = y_train[:TRAIN_LIMIT]
         print(f"Training subset: {TRAIN_LIMIT} images")
+    else:
+        print(f"Training on full set: {x_train.shape[0]} images")
     rng = np.random.default_rng(SEED)
     c1_w, c1_b = init_conv(rng, 32, 3, 1)
     c2_w, c2_b = init_conv(rng, 64, 3, 32)
@@ -463,9 +465,12 @@ def main() -> None:
 
     meta = {
         "test_accuracy": round(float(test_acc), 6),
+        "train_images": int(x_train.shape[0]) if TRAIN_LIMIT <= 0 else TRAIN_LIMIT,
         "epochs": EPOCHS,
+        "batch_size": BATCH_SIZE,
+        "learning_rate": LEARNING_RATE,
         "architecture": "Conv32/ReLU/Pool -> Conv64/ReLU/Pool -> Flatten -> Dense128/ReLU -> Dense10/Softmax",
-        "reference": "Keras/TensorFlow MNIST CNN tutorial (~99% test acc with similar stack)",
+        "reference": "Keras/TensorFlow MNIST CNN tutorial (~99% test acc with full 60k train)",
     }
     (CASE_DIR / "training_meta.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
 

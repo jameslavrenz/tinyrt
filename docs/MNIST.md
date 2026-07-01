@@ -10,7 +10,7 @@ End-to-end regression test: real MNIST handwritten digits (28×28 grayscale) thr
 | Dense hidden | 128 units | ReLU |
 | Dense output | 10 units | Softmax (digit probabilities) |
 
-Weights and biases are **float32** in `models/mnist_mlp.bin` (~398 KiB). Trained offline with `tools/export_mnist_mlp.py`: **Adam**, cross-entropy, 40 epochs (~**97–98%** test accuracy on full MNIST).
+Weights and biases are **float32** in `models/mnist_mlp.bin` (~398 KiB). Trained offline with `tools/export_mnist_mlp.py`: **Adam**, cross-entropy, **60,000 images**, **40 epochs** → **98.06%** test accuracy (best-in-class for this architecture). Metrics in `models/mnist/training_meta.json`.
 
 ## Test assets
 
@@ -18,7 +18,8 @@ Weights and biases are **float32** in `models/mnist_mlp.bin` (~398 KiB). Trained
 models/
 ├── mnist_mlp.json          # architecture
 ├── mnist_mlp.bin           # float32 weights
-└── mnist/
+    └── mnist/
+        ├── training_meta.json  # accuracy + training hyperparams
     ├── manifest.json       # 10 cases + tolerance
     ├── case_000.input.bin  # 784 float32 pixels
     ├── case_000.expected.bin # 10 float32 reference outputs

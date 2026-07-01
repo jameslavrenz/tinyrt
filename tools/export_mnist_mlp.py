@@ -326,6 +326,17 @@ def main() -> None:
     (MNIST_DIR / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(f"Wrote {len(cases)} test cases to {MNIST_DIR}")
 
+    meta = {
+        "test_accuracy": round(float(test_acc), 6),
+        "train_images": int(x_train.shape[0]),
+        "epochs": EPOCHS,
+        "batch_size": BATCH_SIZE,
+        "learning_rate": LEARNING_RATE,
+        "architecture": f"{INPUT_DIM} -> {HIDDEN_DIM} (ReLU) -> {OUTPUT_DIM} (softmax)",
+        "reference": "Standard MNIST MLP baseline (~98% test acc with Adam + cross-entropy)",
+    }
+    (MNIST_DIR / "training_meta.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
+
 
 if __name__ == "__main__":
     main()

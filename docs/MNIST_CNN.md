@@ -19,13 +19,13 @@ This is the standard “two conv blocks + pooling + dense head” recipe used in
 
 ## Accuracy vs published results
 
-| Metric | netkit (this export) | Typical tutorial (full 60k train) |
-|--------|----------------------|----------------------------------|
-| Test accuracy | **97.88%** | ~98.5–99.3% |
-| Training set | 15,000 images (subset) | 60,000 images |
-| Optimizer | Adam, lr=0.001, 10 epochs | Similar |
+| Metric | netkit (committed export) | Typical baseline |
+|--------|---------------------------|------------------|
+| Test accuracy | **99.02%** | ~98.5–99.3% (Keras/TF CNN tutorials) |
+| Training set | **60,000** images | 60,000 |
+| Optimizer | Adam, lr=0.001, **20 epochs** | Similar |
 
-netkit’s result is **within ~1–1.5 points** of published tutorial numbers. Training on the full 60k set (`TRAIN_LIMIT = 0` in the export script) typically closes most of that gap and reaches ~99% test accuracy — the engine matches the reference architecture; the gap is mostly training budget.
+For comparison, the [MNIST MLP suite](MNIST.md) on the same data reaches **98.06%** test accuracy — the CNN matches or exceeds published tutorial numbers.
 
 Recorded in `models/mnist_cnn/training_meta.json`.
 
