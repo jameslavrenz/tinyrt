@@ -216,6 +216,60 @@ static void TestModelLoadRun(void)
     }
 }
 
+static void TestModelLoaderHelpers(void)
+{
+    printf("\n--- model loader helpers ---\n");
+
+    char bin_path[NK_MAX_PATH_LEN] = {};
+    ExpectTrue(nk_json_path_to_bin_path("models/test_mlp.json", bin_path, sizeof(bin_path)),
+               "json path to bin path");
+    ExpectTrue(strcmp(bin_path, "models/test_mlp.bin") == 0, "bin path suffix");
+
+    nk_arch_print("models/test_mlp.json");
+    printf("PASS nk_arch_print smoke (output above)\n");
+
+    ExpectStatus(nk_arch_print("models/test_mlp.json"), NK_OK, "nk_arch_print status");
+    ExpectStatus(nk_arch_print(NULL), NK_ERR_INVALID_ARGUMENT, "nk_arch_print null path");
+}
+
+static void TestModelMetadata(void)
+{
+    printf("\n--- model metadata ---\n");
+
+    alignas(max_align_t) static unsigned char memory[NK_ARENA_DEFAULT_CAPACITY];
+    nk_arena_t arena;
+    nk_arena_init(&arena, memory, sizeof(memory));
+
+    nk_model_t model;
+    ExpectStatus(nk_model_load("models/test_mlp.json", &arena, &model), NK_OK, "model load for metadata");
+
+    ExpectTrue(nk_model_kind(&model) == NK_NETWORK_MLP, "model kind mlp");
+    ExpectTrue(nk_model_input_count(&model) == 2, "model input count");
+    ExpectTrue(nk_model_output_count(&model) == 2, "model output count");
+
+    nk_arch_info_t info = {0};
+    ExpectStatus(nk_model_get_arch(&model, &info), NK_OK, "model get arch");
+    ExpectTrue(info.input_elements == 2, "arch info input elements");
+    ExpectTrue(info.output_elements == 2, "arch info output elements");
+}
+
+static void TestInspectModel(void)
+{
+    printf("\n--- inspect model ---\n");
+
+    alignas(max_align_t) static unsigned char memory[NK_ARENA_DEFAULT_CAPACITY];
+    nk_arena_t arena;
+    nk_arena_init(&arena, memory, sizeof(memory));
+
+    nk_inspect_info_t info = {0};
+    ExpectStatus(nk_inspect_model("models/test_mlp.json", &arena, &info), NK_OK, "inspect test_mlp");
+    ExpectTrue(info.arch.input_elements == 2, "inspect input elements");
+    ExpectTrue(info.weight_floats > 0, "inspect weight floats");
+    ExpectTrue(info.arena_bytes_after_load > 0, "inspect arena after load");
+    ExpectTrue(info.arena_bytes_after_forward >= info.arena_bytes_after_load,
+               "inspect arena after forward");
+}
+
 static void TestVectorsRegression(void)
 {
     printf("\n============================\n");
@@ -237,6 +291,9 @@ int main(void)
     TestArenaAlignment();
     TestTensorOps();
     TestParseArchitecture();
+    TestModelLoaderHelpers();
+    TestModelMetadata();
+    TestInspectModel();
     TestMnistCnnLoad();
     TestModelLoadRun();
     TestVectorsRegression();

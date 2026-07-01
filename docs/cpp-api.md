@@ -212,8 +212,12 @@ struct LoadResult {
 struct ArchitectureSpec { /* version, kind, input_shape, layers, expected_weight_floats */ };
 
 LoadResult ParseArchitecture(const char* json_path, ArchitectureSpec& spec);
-void PrintArchitecture(const ArchitectureSpec& spec);
+uint32_t ComputeMlpOutputElements(const ArchitectureSpec& spec);
+uint32_t ComputeCnnOutputElements(const ArchitectureSpec& spec);
+void PrintArchitecture(const ArchitectureSpec& spec);  // CLI inspect --full
 void PrintNetworkSummary(const char* json_path, const ArchitectureSpec& spec);
+void PrintWeightsSummary(const char* json_path, float* weights,
+                         std::size_t float_count, std::size_t expected_float_count);
 
 bool JsonPathToBinPath(const char* json_path, char* bin_path, std::size_t capacity);
 
@@ -232,6 +236,10 @@ LoadResult Load(const char* json_path, Arena& arena, NetworkKind& kind,
                 std::array<uint32_t, kMaxTensorRank>& input_shape, uint32_t& input_rank);
 }
 ```
+
+**C equivalents:** `nk_parse_architecture` fills `nk_arch_info_t` with `input_elements` and `output_elements` (same as `ComputeMlpOutputElements` / `ComputeCnnOutputElements`). `PrintNetworkSummary` → `nk_arch_print`. `PrintArchitecture` and `PrintWeightsSummary` are CLI `--full` diagnostics only (no C binding).
+
+**High-level C++ usage** loads with `Load` / `LoadMLP` / `LoadCNN` and calls `forward` directly. The C API adds `nk_model_t` + `nk_model_run` as a convenience wrapper — see [c-api.md](c-api.md).
 
 **JSON format** — full schema in [MODEL_FORMAT.md](MODEL_FORMAT.md).
 

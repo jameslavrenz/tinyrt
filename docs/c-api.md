@@ -165,15 +165,79 @@ Model load / run APIs allocate internally with the correct alignment; you only n
 
 ## Tensor, ops, conv, MLP, CNN
 
-See [`netkit.h`](../include/netkit.h) for:
+Full signatures are in [`netkit.h`](../include/netkit.h). Each group mirrors the C++ headers listed in [cpp-api.md](cpp-api.md).
 
-- `nk_tensor_*` — create, view, fill, print, data access
-- `nk_ops_*` — validation, arithmetic, activations
-- `nk_conv2d_forward`
-- `nk_mlp_*` — create, init layer, forward
-- `nk_cnn_*` — create, init blocks, forward
+### Tensor factory (`tensor_factory.hpp`)
 
-### CNN pipeline (C)
+| C function | C++ equivalent |
+|------------|----------------|
+| `nk_tensor_create_2d` | `TensorFactory::Create2D` |
+| `nk_tensor_create_nd` | `TensorFactory::CreateND` |
+| `nk_tensor_view_2d` | `TensorFactory::View2D` |
+| `nk_tensor_fill` | `TensorFactory::Fill` |
+| `nk_tensor_print` | `TensorFactory::Print` |
+| `nk_tensor_print_labeled` | `TensorFactory::PrintLabeled` |
+
+### Tensor access (`tensor_access.hpp`)
+
+| C function | C++ equivalent |
+|------------|----------------|
+| `nk_tensor_data_f32` | `tensor_data_f32` |
+| `nk_tensor_data_f32_const` | `tensor_data_f32` (const) |
+| `nk_tensor_index_nhwc` | `index_nhwc` |
+
+### Ops (`ops.hpp`)
+
+| C function | C++ equivalent |
+|------------|----------------|
+| `nk_ops_is_elementwise_valid` | `IsElementwiseValid` |
+| `nk_ops_check_same_shape_2d` | `CheckSameShape2D` |
+| `nk_ops_check_same_shape_nd` | `CheckSameShapeND` |
+| `nk_ops_is_matmul_valid` | `IsMatMulValid` |
+| `nk_ops_is_elementwise_valid_nd` | `IsElementwiseValidND` |
+| `nk_ops_is_unary_op_valid` | `IsUnaryOpValid` |
+| `nk_ops_mul` | `Mul` |
+| `nk_ops_mul_scalar` | `MulScalar` |
+| `nk_ops_mat_add` | `MatAdd` |
+| `nk_ops_mat_add_nd` | `MatAddND` |
+| `nk_ops_mat_mul` | `MatMul` |
+| `nk_ops_mul_nd` | `MulND` |
+| `nk_ops_relu` | `ReLU` |
+| `nk_ops_sigmoid` | `Sigmoid` |
+| `nk_ops_tanh` | `Tanh` |
+| `nk_ops_leaky_relu` | `LeakyReLU` |
+| `nk_ops_relu6` | `ReLU6` |
+| `nk_ops_softmax` | `Softmax` |
+
+### MLP (`mlp.hpp`)
+
+| C function | C++ equivalent |
+|------------|----------------|
+| `nk_mlp_create` | `MLPNetwork` constructor |
+| `nk_mlp_is_valid` | `MLPNetwork::IsValid` |
+| `nk_mlp_init_layer` | `MLPNetwork::InitLayer` |
+| `nk_mlp_forward` | `MLPNetwork::forward` |
+
+### CNN (`cnn.hpp`)
+
+| C function | C++ equivalent |
+|------------|----------------|
+| `nk_cnn_create` | `CNNNetwork` constructor |
+| `nk_cnn_is_valid` | `CNNNetwork::IsValid` |
+| `nk_cnn_init_conv_layer` | `CNNNetwork::InitConvLayer` |
+| `nk_cnn_init_pool_layer` | `CNNNetwork::InitPoolLayer` |
+| `nk_cnn_init_flatten_layer` | `CNNNetwork::InitFlattenLayer` |
+| `nk_cnn_init_dense_layer` | `CNNNetwork::InitDenseLayer` |
+| `nk_cnn_init_layer` | `CNNNetwork::InitLayer` (conv alias) |
+| `nk_cnn_forward` | `CNNNetwork::forward` |
+
+### Conv2D (`conv2d.hpp`)
+
+| C function | C++ equivalent |
+|------------|----------------|
+| `nk_conv2d_forward` | `Conv2D::forward` |
+
+### CNN pipeline (manual construction)
 
 Hybrid CNN models (conv → max pool → flatten → dense) use:
 
@@ -190,10 +254,20 @@ For file-based models (including `models/mnist_cnn.json`), use `nk_cnn_load` or 
 
 ## Model loader
 
+| C function | C++ equivalent | Notes |
+|------------|----------------|-------|
+| `nk_parse_architecture` | `ParseArchitecture` + `FillArchInfo` | Populates `nk_arch_info_t`; `output_elements` uses `ComputeMlpOutputElements` / `ComputeCnnOutputElements` |
+| `nk_arch_print` | `PrintNetworkSummary` | Boxed network summary to stdout; returns `nk_status_t` |
+| `nk_json_path_to_bin_path` | `JsonPathToBinPath` | |
+| `nk_load_weights_bin` | `LoadWeightsBin` | |
+| `nk_mlp_load` | `LoadMLP` | |
+| `nk_cnn_load` | `LoadCNN` | Supports conv / pool / flatten / dense JSON |
+| `nk_model_load_auto` | `Load` | Dispatches by JSON `network` field |
+
 ```c
 nk_status_t nk_parse_architecture(const char* json_path, nk_arch_info_t* info);
-void nk_arch_print(const char* json_path);  /* boxed network summary to stdout */
-bool nk_json_path_to_bin_path(const char* json_path, char* bin_path, size_t capacity);
+nk_status_t nk_arch_print(const char* json_path);
+bool nk_json_path_to_bin_path(const char* json_path, char* bin_path, size_t bin_path_capacity);
 nk_status_t nk_load_weights_bin(const char* json_path, nk_arena_t* arena, float** weights, size_t* float_count);
 nk_status_t nk_mlp_load(const char* json_path, nk_arena_t* arena, nk_mlp_t* mlp, nk_arch_info_t* info);
 nk_status_t nk_cnn_load(const char* json_path, nk_arena_t* arena, nk_cnn_t* cnn, nk_arch_info_t* info);
@@ -205,9 +279,15 @@ High-level combined handle:
 
 ```c
 nk_status_t nk_model_load(const char* json_path, nk_arena_t* arena, nk_model_t* model);
+nk_status_t nk_model_get_arch(const nk_model_t* model, nk_arch_info_t* info);
+uint32_t nk_model_input_count(const nk_model_t* model);
+uint32_t nk_model_output_count(const nk_model_t* model);
+nk_network_kind_t nk_model_kind(const nk_model_t* model);
 nk_status_t nk_model_run(...);
 nk_status_t nk_inspect_model(...);
 ```
+
+**C++-only diagnostics (no C binding):** `PrintArchitecture`, `PrintWeightsSummary` — used by `./netkit inspect --full`. See [API_PARITY.md](API_PARITY.md).
 
 ## Tests and CLI
 
@@ -236,6 +316,8 @@ nk_status_t nk_model_run(const nk_model_t* model,
                          uint32_t* output_count);
 ```
 
+These mirror querying a loaded C++ network after `ModelLoader::Load` — input/output counts come from the same `ComputeMlpOutputElements` / `ComputeCnnOutputElements` logic used when filling `nk_arch_info_t`.
+
 ### `nk_model_load`
 
 Loads architecture and weights from `json_path` (companion `.bin` resolved automatically). Allocates network state from `arena`.
@@ -261,7 +343,7 @@ Runs one forward pass.
 nk_status_t nk_inspect_model(const char* json_path, nk_arena_t* arena, nk_inspect_info_t* info);
 ```
 
-Loads the model, runs a zero-input forward pass, and reports arena high-water marks. Use this to size embedded memory regions.
+Loads the model, runs a zero-input forward pass, and reports arena high-water marks. C++ equivalent: load via `ModelLoader::Load`, run forward, read `arena.offset` — or use `./netkit inspect --full`. Use this to size embedded memory regions.
 
 ## Complete examples
 

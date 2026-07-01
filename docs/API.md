@@ -11,9 +11,11 @@ Both APIs share:
 
 - Bump-pointer **arena** memory management (no heap in layer code paths)
 - **JSON + `.bin`** model loading
-- **MLP** and **CNN** forward-only inference
+- **MLP** and **CNN** forward-only inference (including conv / pool / flatten / dense CNN pipelines)
 - **NHWC** tensor layout for convolutions
 - **Float32 only (today)** — all inference tensors, weights, and math use IEEE-754 single precision; float16, int16, int8, and int4 planned ([DATATYPES.md](DATATYPES.md))
+
+Every stable C++ public symbol has a documented C equivalent except CLI-only diagnostics — see [API_PARITY.md](API_PARITY.md).
 
 ## Documentation map
 

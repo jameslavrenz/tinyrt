@@ -139,8 +139,10 @@ Both suites exercise the same **36 inference regression cases** (16 hand vector 
 | C++ | C |
 |-----|---|
 | `ParseArchitecture` | `nk_parse_architecture` |
-| `PrintArchitecture` | — (compact text; CLI `--full` only) |
+| `ComputeMlpOutputElements` / `ComputeCnnOutputElements` | `nk_arch_info_t.output_elements` via `nk_parse_architecture` / `nk_model_get_arch` |
+| `PrintArchitecture` | — (CLI `--full` only) |
 | `PrintNetworkSummary` | `nk_arch_print` |
+| `PrintWeightsSummary` | — (CLI `--full` only) |
 | `JsonPathToBinPath` | `nk_json_path_to_bin_path` |
 | `LoadWeightsBin` | `nk_load_weights_bin` |
 | `LoadMLP` | `nk_mlp_load` |
@@ -153,6 +155,15 @@ High-level combined handle (C convenience):
 | C++ usage pattern | C |
 |-------------------|---|
 | Load + run inference | `nk_model_load`, `nk_model_run`, `nk_inspect_model` |
+| Query loaded model | `nk_model_get_arch`, `nk_model_input_count`, `nk_model_output_count`, `nk_model_kind` |
+
+### Intentional C++-only symbols
+
+| C++ | Reason |
+|-----|--------|
+| `PrintArchitecture`, `PrintWeightsSummary` | CLI `./netkit inspect --full` diagnostics |
+| `Json::` parser helpers | Internal; use `nk_parse_architecture` / loaders |
+| `run_mnist_tests`, `run_mnist_cnn_tests` | Internal; C calls `nk_run_all_tests()` |
 
 ### Vectors / tests
 

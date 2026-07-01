@@ -324,7 +324,7 @@ nk_status_t nk_cnn_forward(nk_cnn_t* cnn,
 /* -------------------------------------------------------------------------- */
 
 nk_status_t nk_parse_architecture(const char* json_path, nk_arch_info_t* info);
-void nk_arch_print(const char* json_path);
+nk_status_t nk_arch_print(const char* json_path);
 
 bool nk_json_path_to_bin_path(const char* json_path, char* bin_path, size_t bin_path_capacity);
 

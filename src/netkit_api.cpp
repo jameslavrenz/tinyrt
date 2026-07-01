@@ -655,15 +655,18 @@ nk_status_t nk_parse_architecture(const char* json_path, nk_arch_info_t* info)
     return NK_OK;
 }
 
-void nk_arch_print(const char* json_path)
+nk_status_t nk_arch_print(const char* json_path)
 {
     if (!json_path)
-        return;
+        return NK_ERR_INVALID_ARGUMENT;
     ModelLoader::ArchitectureSpec spec{};
     const char* resolved = nullptr;
-    if (ParseSpec(json_path, spec, &resolved) != NK_OK)
-        return;
+    const nk_status_t status = ParseSpec(json_path, spec, &resolved);
+    if (status != NK_OK)
+        return status;
     ModelLoader::PrintNetworkSummary(resolved, spec);
+    SetLastError(nullptr);
+    return NK_OK;
 }
 
 bool nk_json_path_to_bin_path(const char* json_path, char* bin_path, size_t bin_path_capacity)
