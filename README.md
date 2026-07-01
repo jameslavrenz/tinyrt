@@ -38,7 +38,7 @@ Application code is C++26. C23 is limited to the C header, the `extern "C"` brid
 - **CLI** — `test`, `run`, and `inspect` commands for desktop development
 - **MLP & CNN** — High-level network abstractions with JSON + `.bin` loading
 - **Arena allocator** — Bump-pointer memory with aligned allocation (no heap in layer paths)
-- **Regression tests** — hand vector suites plus MNIST MLP and CNN (28 cases via `make test`)
+- **Regression tests** — hand vector suites plus MNIST MLP and CNN (36 cases via `make test`)
 - **Float32 inference** — all tensors, weights, and math use IEEE-754 single precision (`float`)
 
 ## Quick start
@@ -131,7 +131,7 @@ Regression tests: [docs/TESTING.md](docs/TESTING.md) (hand vectors + MNIST).
 ```bash
 make              # netkit CLI + libnetkit.a
 make build-all    # netkit + examples + C API test binary
-make test         # C++ API tests + C API tests (28 regression cases)
+make test         # C++ API tests + C API tests (36 regression cases)
 make test-cpp     # C++ API regression only
 make test-c       # C API regression only
 make example-cpp  # C++26 usage demo
@@ -156,8 +156,8 @@ make test-c     # ./tests/test_c_api
 
 | Suite | Language | Entry point | Inference cases |
 |-------|----------|-------------|-----------------|
-| C++ API | C++26 | `./netkit test` → `src/test.cpp` | 28 (8 hand + 10 MNIST MLP + 10 MNIST CNN) |
-| C API | C23 | `tests/test_c_api.c` | Same 28 + API smoke tests |
+| C++ API | C++26 | `./netkit test` → `src/test.cpp` | 36 (16 hand + 10 MNIST MLP + 10 MNIST CNN) |
+| C API | C23 | `tests/test_c_api.c` | Same 36 + API smoke tests |
 
 Hand cases use `models/*.vectors.json` ([VECTORS_TESTS.md](docs/VECTORS_TESTS.md)).  
 MNIST MLP: [MNIST.md](docs/MNIST.md). MNIST CNN: [MNIST_CNN.md](docs/MNIST_CNN.md).

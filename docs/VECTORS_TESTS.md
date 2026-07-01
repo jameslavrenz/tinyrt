@@ -1,6 +1,6 @@
 # Vectors Regression Tests
 
-Hand-written regression tests use **declarative JSON files**: `*.vectors.json` paired with small model bundles. They run alongside the [MNIST MLP](MNIST.md) and [MNIST CNN](MNIST_CNN.md) suites as part of `make test` (8 hand cases + 10 MLP + 10 CNN = **28 total**). Overview: [TESTING.md](TESTING.md).
+Hand-written regression tests use **declarative JSON files**: `*.vectors.json` paired with small model bundles. They run alongside the [MNIST MLP](MNIST.md) and [MNIST CNN](MNIST_CNN.md) suites as part of `make test` (16 hand cases + 10 MLP + 10 CNN = **36 total**). Overview: [TESTING.md](TESTING.md).
 
 Both `make test-cpp` and `make test-c` invoke the same cases through `run_all_tests()` / `nk_run_all_tests()`.
 
@@ -39,6 +39,10 @@ Outputs are compared element-wise with absolute tolerance **1e-5**:
 
 On mismatch, the runner prints expected vs actual and the failing index.
 
+Hand vector cases also print a per-output element table (`out[i]: actual=… expected=…`) so small models show meaningful numeric checks instead of a bare PASS line.
+
+MNIST cases print the predicted class, winner probability, and any runner-up outputs above 0.01 (softmax often leaves most classes at 0.0000).
+
 ## Running tests
 
 ```bash
@@ -51,17 +55,15 @@ The C++ suite is implemented in `src/test.cpp` via `VectorsLoader::RunVectorsFil
 
 ## Registered vector files
 
-These five files (eight cases total) are wired in `src/test.cpp`:
+These five files (sixteen cases total) are wired in `src/test.cpp`:
 
-| Vectors file | Model | Network |
-|--------------|-------|---------|
-| `models/test_mlp.vectors.json` | `test_mlp.json` | MLP |
-| `models/mlp_hand.vectors.json` | `mlp_hand.json` | MLP |
-| `models/test_cnn.vectors.json` | `test_cnn.json` | CNN |
-| `models/cnn_4x4_single.vectors.json` | `cnn_4x4_single.json` | CNN |
-| `models/cnn_hand.vectors.json` | `cnn_hand.json` | CNN |
-
-(`mlp_hand` and `cnn_hand` each contain multiple cases in one file.)
+| Vectors file | Model | Network | Cases |
+|--------------|-------|---------|------:|
+| `models/test_mlp.vectors.json` | `test_mlp.json` | MLP | 3 |
+| `models/mlp_hand.vectors.json` | `mlp_hand.json` | MLP | 6 |
+| `models/test_cnn.vectors.json` | `test_cnn.json` | CNN | 2 |
+| `models/cnn_4x4_single.vectors.json` | `cnn_4x4_single.json` | CNN | 2 |
+| `models/cnn_hand.vectors.json` | `cnn_hand.json` | CNN | 3 |
 
 ## Adding a new regression case
 

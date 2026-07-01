@@ -16,16 +16,16 @@ make rebuild      # clean + make
 
 ## Regression suites
 
-Both `make test-cpp` and `make test-c` exercise the **same 28 inference cases** via `run_all_tests()` / `nk_run_all_tests()`:
+Both `make test-cpp` and `make test-c` exercise the **same 36 inference cases** via `run_all_tests()` / `nk_run_all_tests()`:
 
 | Suite | Cases | Source | Description |
 |-------|------:|--------|-------------|
-| Hand MLP vectors | 4 | `models/test_mlp.vectors.json`, `models/mlp_hand.vectors.json` | Small hand-checked MLP forwards |
-| Hand CNN vectors | 4 | `models/test_cnn.vectors.json`, `models/cnn_4x4_single.vectors.json`, `models/cnn_hand.vectors.json` | Small hand-checked CNN forwards (pure conv) |
+| Hand MLP vectors | 9 | `models/test_mlp.vectors.json`, `models/mlp_hand.vectors.json` | Small hand-checked MLP forwards |
+| Hand CNN vectors | 7 | `models/test_cnn.vectors.json`, `models/cnn_4x4_single.vectors.json`, `models/cnn_hand.vectors.json` | Small hand-checked CNN forwards (pure conv) |
 | MNIST MLP | 10 | `models/mnist/manifest.json` | Trained 784→128→10 MLP (98.06% test acc) |
 | MNIST CNN | 10 | `models/mnist_cnn/manifest.json` | Conv+pool+flatten+dense CNN (99.02% test acc) |
 
-**Total: 28 passed** when healthy (`8` hand vector + `10` MNIST MLP + `10` MNIST CNN).
+**Total: 36 passed** when healthy (`16` hand vector + `10` MNIST MLP + `10` MNIST CNN).
 
 | Doc | Contents |
 |-----|----------|
@@ -55,7 +55,7 @@ Entry: `./tests/test_c_api` (C23).
 | Parse architecture | MLP and CNN JSON metadata |
 | Model load / run | `nk_model_load` + `nk_model_run` on hand MLP/CNN |
 | Hybrid CNN | `nk_parse_architecture` + `nk_cnn_load` on `mnist_cnn.json` |
-| Full regression | `nk_run_all_tests()` — same **28** inference cases as C++ |
+| Full regression | `nk_run_all_tests()` — same **36** inference cases as C++ |
 
 The C API regression path uses the same C++ runner internally (`nk_run_all_tests` → `run_all_tests`), so MNIST CNN (conv / pool / flatten / dense) is covered without retraining in CI.
 

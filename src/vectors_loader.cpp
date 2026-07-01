@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <iomanip>
 #include <iostream>
 
 namespace VectorsLoader
@@ -115,22 +116,39 @@ namespace VectorsLoader
             return std::fabs(a - b) <= eps;
         }
 
+        void PrintElementComparison(const float* actual,
+                                    const float* expected,
+                                    uint32_t count,
+                                    float eps)
+        {
+            std::cout << std::fixed << std::setprecision(4);
+            for (uint32_t i = 0; i < count; ++i)
+            {
+                const bool ok = FloatEq(actual[i], expected[i], eps);
+                std::cout << "  out[" << i << "]: actual=" << actual[i]
+                          << "  expected=" << expected[i]
+                          << (ok ? "  OK" : "  MISMATCH") << "\n";
+            }
+        }
+
         bool CheckFloats(const float* actual,
                          const float* expected,
                          uint32_t count,
-                         const char* label)
+                         const char* label,
+                         float eps = 1e-5f)
         {
+            PrintElementComparison(actual, expected, count, eps);
+
             for (uint32_t i = 0; i < count; ++i)
             {
-                if (!FloatEq(actual[i], expected[i]))
+                if (!FloatEq(actual[i], expected[i], eps))
                 {
-                    std::cout << "FAIL " << label << ": expected " << expected[i]
-                              << " got " << actual[i] << " at index " << i << "\n";
+                    std::cout << "FAIL " << label << " (mismatch at out[" << i << "])\n";
                     return false;
                 }
             }
 
-            std::cout << "PASS " << label << "\n";
+            std::cout << "PASS " << label << " (" << count << " outputs match within 1e-5)\n";
             return true;
         }
 
@@ -213,7 +231,6 @@ namespace VectorsLoader
 
             TensorFactory::PrintLabeled("Input", input);
             network.forward(input, output, arena);
-            TensorFactory::PrintLabeled("Output", output);
 
             return CheckFloats(static_cast<const float*>(output.data), expected, expected_count, case_name);
         }
@@ -248,8 +265,6 @@ namespace VectorsLoader
                 std::cout << "FAIL " << case_name << ": arena overflow during CNN forward pass\n";
                 return false;
             }
-
-            TensorFactory::PrintLabeled("Output", output);
 
             if (expected_count != output.num_elements)
             {

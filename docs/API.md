@@ -138,7 +138,7 @@ Summary — full details in [MODEL_FORMAT.md](MODEL_FORMAT.md):
 
 ## Testing
 
-Both API test suites run **28 inference regression cases** (8 hand vector + 10 MNIST MLP + 10 MNIST CNN). See [TESTING.md](TESTING.md), [VECTORS_TESTS.md](VECTORS_TESTS.md), [MNIST.md](MNIST.md), and [MNIST_CNN.md](MNIST_CNN.md).
+Both API test suites run **36 inference regression cases** (16 hand vector + 10 MNIST MLP + 10 MNIST CNN). See [TESTING.md](TESTING.md), [VECTORS_TESTS.md](VECTORS_TESTS.md), [MNIST.md](MNIST.md), and [MNIST_CNN.md](MNIST_CNN.md).
 
 ```bash
 make test       # C++ then C

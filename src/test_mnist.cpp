@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <iomanip>
 #include <iostream>
 
 namespace
@@ -148,15 +149,37 @@ namespace
         return best;
     }
 
-    void PrintOutputNeurons(const float* actual, const float* expected, float tolerance)
+    void PrintClassificationSummary(const float* actual,
+                                    const float* expected,
+                                    uint32_t label,
+                                    float tolerance)
     {
-        std::cout << std::fixed;
+        const uint32_t predicted = ArgMax(actual, kOutputDim);
+
+        std::cout << std::fixed << std::setprecision(4);
+        std::cout << "  predicted class: " << predicted
+                  << "  (label " << label << ")\n";
+        std::cout << "  winner out[" << predicted << "]: actual=" << actual[predicted]
+                  << "  expected=" << expected[predicted];
+        if (FloatNear(actual[predicted], expected[predicted], tolerance))
+            std::cout << "  OK\n";
+        else
+            std::cout << "  MISMATCH\n";
+
+        constexpr float kRunnerUpThreshold = 0.01f;
         for (uint32_t i = 0; i < kOutputDim; ++i)
         {
-            const bool ok = FloatNear(actual[i], expected[i], tolerance);
-            std::cout << "  neuron[" << i << "]: actual=" << actual[i]
-                      << " expected=" << expected[i]
-                      << (ok ? " OK" : " MISMATCH") << "\n";
+            if (i == predicted)
+                continue;
+            if (actual[i] >= kRunnerUpThreshold || expected[i] >= kRunnerUpThreshold)
+            {
+                std::cout << "  runner-up out[" << i << "]: actual=" << actual[i]
+                          << "  expected=" << expected[i];
+                if (FloatNear(actual[i], expected[i], tolerance))
+                    std::cout << "  OK\n";
+                else
+                    std::cout << "  MISMATCH\n";
+            }
         }
     }
 
@@ -323,8 +346,7 @@ VectorsLoader::RunSummary run_mnist_tests()
         const uint32_t predicted = ArgMax(actual, kOutputDim);
 
         std::cout << "\nCase: " << test_case.name << "\n";
-        std::cout << "Label: " << test_case.label << "  Predicted: " << predicted << "\n";
-        PrintOutputNeurons(actual, expected_values, tolerance);
+        PrintClassificationSummary(actual, expected_values, test_case.label, tolerance);
 
         bool outputs_ok = true;
         for (uint32_t i = 0; i < kOutputDim; ++i)
@@ -496,8 +518,7 @@ VectorsLoader::RunSummary run_mnist_cnn_tests()
         const uint32_t predicted = ArgMax(actual, kOutputDim);
 
         std::cout << "\nCase: " << test_case.name << "\n";
-        std::cout << "Label: " << test_case.label << "  Predicted: " << predicted << "\n";
-        PrintOutputNeurons(actual, expected_values, tolerance);
+        PrintClassificationSummary(actual, expected_values, test_case.label, tolerance);
 
         bool outputs_ok = true;
         for (uint32_t i = 0; i < kOutputDim; ++i)

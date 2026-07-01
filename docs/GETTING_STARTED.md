@@ -46,7 +46,7 @@ make test-cpp    # C++26 only: ./netkit test
 make test-c      # C23 only:  ./tests/test_c_api
 ```
 
-Each suite runs **28 inference regression cases** (8 hand-written vector models + 10 MNIST MLP + 10 MNIST CNN digits) plus C API smoke tests. See [TESTING.md](TESTING.md).
+Each suite runs **36 inference regression cases** (16 hand-written vector models + 10 MNIST MLP + 10 MNIST CNN digits) plus C API smoke tests. See [TESTING.md](TESTING.md).
 
 ## Run inference from the CLI
 
