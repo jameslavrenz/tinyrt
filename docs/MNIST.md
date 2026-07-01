@@ -18,9 +18,9 @@ Weights and biases are **float32** in `models/mnist_mlp.bin` (~398 KiB). Trained
 models/
 ├── mnist_mlp.json          # architecture
 ├── mnist_mlp.bin           # float32 weights
-    └── mnist/
-        ├── training_meta.json  # accuracy + training hyperparams
+└── mnist/
     ├── manifest.json       # 10 cases + tolerance
+    ├── training_meta.json  # accuracy + training hyperparams
     ├── case_000.input.bin  # 784 float32 pixels
     ├── case_000.expected.bin # 10 float32 reference outputs
     └── ...

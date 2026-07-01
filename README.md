@@ -175,7 +175,7 @@ MNIST MLP: [MNIST.md](docs/MNIST.md). MNIST CNN: [MNIST_CNN.md](docs/MNIST_CNN.m
 
 ## License
 
-[Add license information here]
+MIT — see [LICENSE](LICENSE).
 
 ## Contributing
 
