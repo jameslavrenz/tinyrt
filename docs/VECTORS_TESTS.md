@@ -1,6 +1,6 @@
 # Vectors Regression Tests
 
-Hand-written regression tests use **declarative JSON files**: `*.vectors.json` paired with small model bundles. They run alongside the [MNIST MLP suite](MNIST.md) as part of `make test` (8 hand cases + 10 MNIST = **18 total**). Overview: [TESTING.md](TESTING.md).
+Hand-written regression tests use **declarative JSON files**: `*.vectors.json` paired with small model bundles. They run alongside the [MNIST MLP](MNIST.md) and [MNIST CNN](MNIST_CNN.md) suites as part of `make test` (8 hand cases + 10 MLP + 10 CNN = **28 total**). Overview: [TESTING.md](TESTING.md).
 
 Both `make test-cpp` and `make test-c` invoke the same cases through `run_all_tests()` / `nk_run_all_tests()`.
 

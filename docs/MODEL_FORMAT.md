@@ -58,18 +58,47 @@ Example:
 
 **Input shape:** 3D NHWC `[height, width, channels]`.
 
-**Layer object (`type: "conv2d"`):**
+CNN pipelines may mix spatial layers and a dense classification head. Supported layer types:
+
+#### `conv2d`
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `type` | string | Yes | Must be `"conv2d"` |
+| `type` | string | Yes | `"conv2d"` |
 | `kernel_size` | integer | Yes | Square kernel (k×k) |
 | `stride` | integer | Yes | Stride (valid convolution only; no padding) |
 | `filters` | integer | Yes | Output channel count |
 | `activation` | string | No | Default `"none"` |
 | `alpha` | number | No | Leaky ReLU slope; default `0.01` |
 
-Example:
+#### `max_pool2d`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `type` | string | Yes | `"max_pool2d"` |
+| `pool_size` | integer | No | Window size (default `2`) |
+| `stride` | integer | No | Stride (default `pool_size`) |
+
+Output size: `(input - pool_size) / stride + 1` per spatial dimension. Channel count unchanged.
+
+#### `flatten`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `type` | string | Yes | `"flatten"` |
+
+Converts NHWC tensor to `[1, H×W×C]` for dense layers. No weights.
+
+#### `dense` (CNN head)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `type` | string | Yes | `"dense"` |
+| `units` | integer | Yes | Output feature count |
+| `activation` | string | No | Default `"none"` |
+| `alpha` | number | No | Leaky ReLU slope; default `0.01` |
+
+Example (pure conv stack):
 
 ```json
 {
@@ -83,9 +112,28 @@ Example:
 }
 ```
 
-**Spatial output size** per layer: `(input - kernel_size) / stride + 1` (integer division). Convolutions are **valid-only** — no padding is applied yet.
+Example (MNIST tutorial-style head — see [MNIST_CNN.md](MNIST_CNN.md)):
 
-**Tensor layout:** NHWC throughout. Flattened CLI/C API input order is row-major over `[H, W, C]`.
+```json
+{
+  "version": 1,
+  "network": "cnn",
+  "input": [28, 28, 1],
+  "layers": [
+    { "type": "conv2d", "kernel_size": 3, "stride": 1, "filters": 32, "activation": "relu" },
+    { "type": "max_pool2d", "pool_size": 2, "stride": 2 },
+    { "type": "conv2d", "kernel_size": 3, "stride": 1, "filters": 64, "activation": "relu" },
+    { "type": "max_pool2d", "pool_size": 2, "stride": 2 },
+    { "type": "flatten" },
+    { "type": "dense", "units": 128, "activation": "relu" },
+    { "type": "dense", "units": 10, "activation": "softmax" }
+  ]
+}
+```
+
+**Spatial output size** for conv/pool: `(input - kernel_size) / stride + 1` (integer division). Convolutions are **valid-only** — no padding.
+
+**Tensor layout:** NHWC for spatial tensors; dense head uses `[batch, features]`. Flattened CLI/C API input order is row-major over `[H, W, C]`.
 
 ### Activations
 
@@ -123,7 +171,9 @@ For each conv2d layer, in sequence:
 1. **Weights** `W[out_channels × kernel × kernel × in_channels]` — see `Conv2D` in `conv2d.hpp`
 2. **Bias** `b[out_channels]`
 
-Where `in_channels` is the previous layer's output channel count (or input channels for layer 0).
+For each dense layer in a CNN pipeline (after flatten), same as MLP: `W[in×out]` row-major, then `b[out]`.
+
+Only `conv2d` and `dense` layers consume weights; `max_pool2d` and `flatten` have none.
 
 ### Generating weights
 

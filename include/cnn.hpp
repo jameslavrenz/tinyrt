@@ -2,6 +2,7 @@
 #include "tensor.hpp"
 #include "arena.hpp"
 #include "conv2d.hpp"
+#include "mlp.hpp"
 
 enum class ConvActivationType
 {
@@ -14,51 +15,90 @@ enum class ConvActivationType
     Softmax
 };
 
+enum class CnnBlockType
+{
+    Conv2D,
+    MaxPool2D,
+    Flatten,
+    Dense
+};
+
 struct Conv2DLayer
 {
     Conv2D conv;
     ConvActivationType activation;
-    float leaky_alpha;   // Only used if activation is LeakyReLU
+    float leaky_alpha = 0.01f;
 
-    // Forward pass: output = activation(conv(input))
     void forward(const Tensor& input, Tensor& output);
+};
+
+struct MaxPool2DLayer
+{
+    int pool_size = 2;
+    int stride = 2;
+
+    void forward(const Tensor& input, Tensor& output);
+};
+
+struct CnnBlock
+{
+    CnnBlockType type = CnnBlockType::Conv2D;
+    Conv2DLayer conv;
+    MaxPool2DLayer pool;
+    MLPLayer dense;
 };
 
 class CNNNetwork
 {
 private:
-    Conv2DLayer* layers;
+    CnnBlock* blocks;
     uint32_t num_layers;
-    Tensor* intermediate_outputs;  // Cache for intermediate results during forward pass
+    Tensor* intermediate_outputs;
     Arena& arena;
 
 public:
-    // Constructor allocates from Arena — no heap fragmentation
     CNNNetwork(uint32_t num_layers, Arena& arena);
-    
-    // No destructor needed - Arena manages all memory
 
-    bool IsValid() const { return layers != nullptr && intermediate_outputs != nullptr; }
+    bool IsValid() const { return blocks != nullptr && intermediate_outputs != nullptr; }
 
-    // Initialize a Conv2D layer at the given index
-    void InitLayer(uint32_t layer_idx, 
-                   int kernel_size, 
+    void InitConvLayer(uint32_t layer_idx,
+                       int kernel_size,
+                       int stride,
+                       int in_channels,
+                       int out_channels,
+                       float* weights,
+                       float* bias,
+                       ConvActivationType activation,
+                       float leaky_alpha = 0.01f);
+
+    void InitPoolLayer(uint32_t layer_idx, int pool_size, int stride);
+
+    void InitFlattenLayer(uint32_t layer_idx);
+
+    void InitDenseLayer(uint32_t layer_idx,
+                        const Tensor& weights,
+                        const Tensor& bias,
+                        ActivationType activation,
+                        float leaky_alpha = 0.01f);
+
+    // Backward-compatible alias for pure conv stacks
+    void InitLayer(uint32_t layer_idx,
+                   int kernel_size,
                    int stride,
                    int in_channels,
                    int out_channels,
                    float* weights,
                    float* bias,
                    ConvActivationType activation,
-                   float leaky_alpha = 0.01f);
+                   float leaky_alpha = 0.01f)
+    {
+        InitConvLayer(layer_idx, kernel_size, stride, in_channels, out_channels, weights, bias, activation,
+                      leaky_alpha);
+    }
 
-    // Forward pass through entire network
-    // input_shape: [H, W, C] (HWC format)
-    // Returns output tensor reference
     Tensor& forward(const Tensor& input, Arena& arena);
 
-    // Get a specific layer
-    Conv2DLayer& GetLayer(uint32_t idx) { return layers[idx]; }
+    CnnBlock& GetBlock(uint32_t idx) { return blocks[idx]; }
 
-    // Get the most recent output tensor
     Tensor& GetOutput() { return intermediate_outputs[num_layers - 1]; }
 };

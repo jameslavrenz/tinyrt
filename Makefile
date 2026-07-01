@@ -41,7 +41,7 @@ TEST_C = tests/test_c_api
 TEST_C_SRC = tests/test_c_api.c
 TEST_C_OBJ = tests/test_c_api.o
 
-.PHONY: all lib clean rebuild test test-cpp test-c run example-c example-cpp examples export-mnist build-all
+.PHONY: all lib clean rebuild test test-cpp test-c run example-c example-cpp examples export-mnist export-mnist-cnn export-mnist-all build-all
 
 all: $(TARGET)
 
@@ -100,3 +100,8 @@ examples: example-cpp example-c
 
 export-mnist:
 	python3 tools/export_mnist_mlp.py
+
+export-mnist-cnn:
+	python3 tools/export_mnist_cnn.py
+
+export-mnist-all: export-mnist export-mnist-cnn

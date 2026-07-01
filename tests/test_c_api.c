@@ -204,7 +204,7 @@ static void TestVectorsRegression(void)
 
     const nk_test_summary_t summary = nk_run_all_tests();
     ExpectTrue(summary.failed == 0, "regression failed count");
-    ExpectTrue(summary.passed == 18, "regression passed count (8 vector + 10 MNIST)");
+    ExpectTrue(summary.passed == 28, "regression passed count (8 vector + 10 MNIST MLP + 10 MNIST CNN)");
 }
 
 int main(void)

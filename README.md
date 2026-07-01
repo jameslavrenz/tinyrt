@@ -18,6 +18,7 @@ Models are loaded from JSON architecture files and companion float32 `.bin` weig
 | **[C++ API Reference](docs/cpp-api.md)** | Headers in `include/` (C++26) |
 | **[API Parity Policy](docs/API_PARITY.md)** | C ↔ C++ symbol map and contribution rules |
 | **[MNIST MLP Test](docs/MNIST.md)** | Trained 784→128→10 MLP on handwritten digits |
+| **[MNIST CNN Test](docs/MNIST_CNN.md)** | Tutorial-style conv+pool CNN on MNIST |
 | **[MLP Background](docs/nn.md)** | Optional theory (training/backprop); netkit is inference-only |
 
 ## Language standards
@@ -35,7 +36,7 @@ Application code is C++26. C23 is limited to the C header, the `extern "C"` brid
 - **CLI** — `test`, `run`, and `inspect` commands for desktop development
 - **MLP & CNN** — High-level network abstractions with JSON + `.bin` loading
 - **Arena allocator** — Bump-pointer memory with aligned allocation (no heap in layer paths)
-- **Regression tests** — hand vector suites plus MNIST MLP (18 cases via `make test`)
+- **Regression tests** — hand vector suites plus MNIST MLP and CNN (28 cases via `make test`)
 - **Float32 inference** — all tensors, weights, and math use IEEE-754 single precision (`float`)
 
 ## Quick start
@@ -89,7 +90,8 @@ netkit/
 ├── models/                 # Hand test bundles, mnist_mlp, models/mnist/ cases
 ├── tools/
 │   ├── write_hand_models.py
-│   └── export_mnist_mlp.py
+│   ├── export_mnist_mlp.py
+│   └── export_mnist_cnn.py
 └── docs/                   # Guides and API reference
     ├── TESTING.md
     ├── GETTING_STARTED.md
@@ -125,12 +127,13 @@ Regression tests: [docs/TESTING.md](docs/TESTING.md) (hand vectors + MNIST).
 ```bash
 make              # netkit CLI + libnetkit.a
 make build-all    # netkit + examples + C API test binary
-make test         # C++ API tests + C API tests (18 regression cases)
+make test         # C++ API tests + C API tests (28 regression cases)
 make test-cpp     # C++ API regression only
 make test-c       # C API regression only
 make example-cpp  # C++26 usage demo
 make example-c    # C23 usage demo
-make export-mnist # regenerate MNIST model (requires numpy)
+make export-mnist # regenerate MNIST MLP model (requires numpy)
+make export-mnist-cnn # regenerate MNIST CNN model (requires numpy)
 make clean
 make rebuild
 ```
@@ -149,11 +152,11 @@ make test-c     # ./tests/test_c_api
 
 | Suite | Language | Entry point | Inference cases |
 |-------|----------|-------------|-----------------|
-| C++ API | C++26 | `./netkit test` → `src/test.cpp` | 18 (8 hand vector + 10 MNIST) |
-| C API | C23 | `tests/test_c_api.c` | Same 18 + API smoke tests |
+| C++ API | C++26 | `./netkit test` → `src/test.cpp` | 28 (8 hand + 10 MNIST MLP + 10 MNIST CNN) |
+| C API | C23 | `tests/test_c_api.c` | Same 28 + API smoke tests |
 
 Hand cases use `models/*.vectors.json` ([VECTORS_TESTS.md](docs/VECTORS_TESTS.md)).  
-MNIST uses trained weights in `models/mnist_mlp.bin` ([MNIST.md](docs/MNIST.md)).
+MNIST MLP: [MNIST.md](docs/MNIST.md). MNIST CNN: [MNIST_CNN.md](docs/MNIST_CNN.md).
 
 ## Design principles
 
@@ -164,7 +167,8 @@ MNIST uses trained weights in `models/mnist_mlp.bin` ([MNIST.md](docs/MNIST.md))
 
 ## Roadmap
 
-- Pooling (max, average) and conv padding
+- Max/average pooling (max pool supported in CNN pipelines; avg pool not yet)
+- Conv padding
 - Batch normalization
 - Quantization (int8, uint8)
 - Python model exporter

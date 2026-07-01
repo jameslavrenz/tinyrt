@@ -22,9 +22,10 @@ Both `make test-cpp` and `make test-c` exercise the **same 18 inference cases** 
 |-------|------:|--------|-------------|
 | Hand MLP vectors | 4 | `models/test_mlp.vectors.json`, `models/mlp_hand.vectors.json` | Small hand-checked MLP forwards |
 | Hand CNN vectors | 4 | `models/test_cnn.vectors.json`, `models/cnn_4x4_single.vectors.json`, `models/cnn_hand.vectors.json` | Small hand-checked CNN forwards |
-| MNIST MLP | 10 | `models/mnist/manifest.json` | Real 28×28 digits, trained 784→128→10 MLP |
+| MNIST MLP | 10 | `models/mnist/manifest.json` | Trained 784→128→10 MLP |
+| MNIST CNN | 10 | `models/mnist_cnn/manifest.json` | Tutorial-style conv+pool+dense CNN |
 
-**Total: 18 passed** when healthy (`8` hand vector + `10` MNIST).
+**Total: 28 passed** when healthy (`8` hand vector + `10` MNIST MLP + `10` MNIST CNN).
 
 Hand vector format: [VECTORS_TESTS.md](VECTORS_TESTS.md)  
 MNIST bundle and training: [MNIST.md](MNIST.md)
@@ -38,6 +39,7 @@ Sections printed in order:
 1. **MLP TESTS** — hand `*.vectors.json` files  
 2. **CNN TESTS** — hand `*.vectors.json` files  
 3. **MNIST MLP TESTS** — `run_mnist_tests()` in `src/test_mnist.cpp`
+4. **MNIST CNN TESTS** — `run_mnist_cnn_tests()` in `src/test_mnist.cpp`
 
 ## C API suite (`make test-c`)
 

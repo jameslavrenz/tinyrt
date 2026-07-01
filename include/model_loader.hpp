@@ -57,6 +57,20 @@ namespace ModelLoader
         float alpha = 0.01f;
     };
 
+    enum class CnnLayerKind : uint8_t
+    {
+        Conv2D,
+        MaxPool2D,
+        Flatten,
+        Dense
+    };
+
+    struct PoolLayerConfig
+    {
+        uint32_t pool_size = 2;
+        uint32_t stride = 2;
+    };
+
     struct ArchitectureSpec
     {
         uint32_t version = 0;
@@ -66,6 +80,9 @@ namespace ModelLoader
         uint32_t num_layers = 0;
         DenseLayerConfig dense_layers[kMaxLayers]{};
         ConvLayerConfig conv_layers[kMaxLayers]{};
+        CnnLayerKind cnn_layer_kinds[kMaxLayers]{};
+        PoolLayerConfig pool_layers[kMaxLayers]{};
+        DenseLayerConfig cnn_dense_layers[kMaxLayers]{};
         std::size_t expected_weight_floats = 0;
     };
 

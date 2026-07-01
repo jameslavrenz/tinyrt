@@ -33,5 +33,10 @@ VectorsLoader::RunSummary run_all_tests()
     std::cout << "============================\n";
     merge(run_mnist_tests());
 
+    std::cout << "\n============================\n";
+    std::cout << " MNIST CNN TESTS\n";
+    std::cout << "============================\n";
+    merge(run_mnist_cnn_tests());
+
     return total;
 }
