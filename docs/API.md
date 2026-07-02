@@ -85,7 +85,7 @@ The `netkit` binary is a desktop development tool (C++26). See [CLI.md](CLI.md).
 
 | Command | Description |
 |---------|-------------|
-| `netkit test` | Run embedded `.nk` regression tests (36 cases) |
+| `netkit test` | Run embedded `.nk` regression tests (69 cases) |
 | `netkit run <model.nk> --input a,b,c` | Single inference |
 | `netkit inspect <model.nk>` | Boxed network summary (`--full` for arena sizing) |
 | `netkit help`, `-h`, `--help` | Print CLI usage |
@@ -136,7 +136,7 @@ Convert ONNX → `.nk` with `python -m netkit convert` or `make export-nk`.
 
 ## Testing
 
-Both API test suites run **36 embedded `.nk` regression cases** on CPU builds — [TESTING.md](TESTING.md). ONNX parity runs in Python (`make test-python`).
+Both API test suites run **69 embedded `.nk` regression cases** on CPU builds — [TESTING.md](TESTING.md). ONNX parity runs in Python (`make test-python`).
 
 ```bash
 make test       # C++ then C (cpu only)

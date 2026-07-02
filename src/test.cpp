@@ -39,6 +39,23 @@ NkRegression::RunSummary run_all_tests()
     std::cout << "============================\n";
     merge(NkRegression::RunModelTests("models/mnist_cnn.nk"));
 
+    std::cout << "\n============================\n";
+    std::cout << " OP MATRIX TESTS\n";
+    std::cout << "============================\n";
+    merge(NkRegression::RunModelTests("models/op_matrix_mlp.nk"));
+    merge(NkRegression::RunModelTests("models/op_matrix_cnn.nk"));
+    merge(NkRegression::RunModelTests("models/deep_mlp.nk"));
+
+    std::cout << "\n============================\n";
+    std::cout << " FASHION-MNIST MLP TESTS\n";
+    std::cout << "============================\n";
+    merge(NkRegression::RunModelTests("models/fashion_mnist_mlp.nk"));
+
+    std::cout << "\n============================\n";
+    std::cout << " FASHION-MNIST CNN TESTS\n";
+    std::cout << "============================\n";
+    merge(NkRegression::RunModelTests("models/fashion_mnist_cnn.nk"));
+
     NkRegression::EndRegressionArena();
 
     return total;

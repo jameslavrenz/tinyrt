@@ -10,7 +10,11 @@ Convert ONNX models into binary **`.nk`** files for the C++ runtime.
 pip install -e python
 ```
 
-Requires **numpy** and **onnx**.
+Requires **numpy** and **onnx**. Training/export scripts additionally need PyTorch:
+
+```bash
+pip install -e "python[train]"
+```
 
 ## Usage
 

@@ -41,7 +41,7 @@ Application code is C++26. C23 is limited to the C header, the `extern "C"` brid
 - **CLI** — `test`, `run`, and `inspect` commands for desktop development
 - **MLP & CNN** — High-level network abstractions with `.nk` loading
 - **Arena allocator** — Bump-pointer memory with aligned allocation (no heap in layer paths)
-- **Regression tests** — embedded `.nk` cases (36 C++) plus Python ONNX parity (26) via `make test`
+- **Regression tests** — embedded `.nk` cases (69 C++) plus Python ONNX parity (49) via `make test`
 - **Float32 inference** — all tensors, weights, and math use IEEE-754 single precision (`float`)
 
 ## Quick start
@@ -136,13 +136,13 @@ make NETKIT_TARGET=mpu lib   # lean embedded runtime
 make NETKIT_TARGET=cpu NETKIT_GLOBAL_ARENA=1 all   # desktop, static arena
 make build-all    # cpu: netkit + examples + C API test binary
 make test         # C++ embedded regression + Python ONNX parity (cpu only)
-make test-cpp     # C++ embedded .nk cases only (36)
+make test-cpp     # C++ embedded .nk cases only (69)
 make test-c       # C API regression only
-make test-python  # .nk vs ONNX Runtime (36)
+make test-python  # .nk vs ONNX Runtime (49)
 make example-cpp  # C++26 usage demo
 make example-c    # C23 usage demo
-make export-mnist # regenerate MNIST MLP model (requires numpy)
-make export-mnist-cnn # regenerate MNIST CNN model (requires numpy)
+make export-mnist # regenerate MNIST MLP model (requires PyTorch: pip install -e "python[train]")
+make export-mnist-cnn # regenerate MNIST CNN model (requires PyTorch)
 make clean
 make rebuild
 ```
@@ -162,9 +162,9 @@ make test-python
 
 | Suite | Language | Entry point | Cases |
 |-------|----------|-------------|-------|
-| C++ embedded | C++26 | `./netkit test` → `src/test.cpp` | 36 (16 hand + 10 MNIST MLP + 10 MNIST CNN) |
-| C API | C23 | `tests/test_c_api.c` | Same 36 + API smoke tests |
-| ONNX parity | Python | `python/tests/test_onnx_parity.py` | 26 (.nk vs ONNX Runtime; mnist_cnn pending) |
+| C++ embedded | C++26 | `./netkit test` → `src/test.cpp` | 69 (16 hand + 20 MNIST + 13 op matrix + 20 Fashion-MNIST) |
+| C API | C23 | `tests/test_c_api.c` | Same 69 + API smoke tests |
+| ONNX parity | Python | `python/tests/test_onnx_parity.py` | 49 (.nk vs ONNX Runtime; tutorial CNNs pending) |
 
 Regression cases are embedded in each bundled `.nk` file ([NK_FORMAT.md](docs/NK_FORMAT.md)).  
 MNIST MLP: [MNIST.md](docs/MNIST.md). MNIST CNN: [MNIST_CNN.md](docs/MNIST_CNN.md).

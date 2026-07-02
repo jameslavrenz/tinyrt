@@ -8,9 +8,9 @@ netkit uses **Make** as the primary build and test driver (no CMake required). C
 make              # NETKIT_TARGET=cpu (default): netkit CLI + libnetkit.a
 make test         # C++ embedded regression + Python ONNX parity (cpu only)
 make build-all    # netkit + examples + C API test binary (cpu)
-make test-cpp     # ./netkit test only (36 embedded .nk cases)
+make test-cpp     # ./netkit test only (69 embedded .nk cases)
 make test-c       # ./tests/test_c_api only
-make test-python  # .nk vs ONNX Runtime (26 cases; requires onnxruntime)
+make test-python  # .nk vs ONNX Runtime (49 cases; requires onnxruntime)
 make clean        # remove objects and binaries
 make rebuild      # clean + make
 ```
@@ -19,7 +19,7 @@ Embedded runtime-only builds: `make NETKIT_TARGET=mcu lib` or `make NETKIT_TARGE
 
 ## C++ regression (`.nk` loader + inference)
 
-Both `make test-cpp` and `make test-c` exercise the **same 36 embedded cases** via `run_all_tests()` / `nk_run_all_tests()`:
+Both `make test-cpp` and `make test-c` exercise the **same 69 embedded cases** via `run_all_tests()` / `nk_run_all_tests()`:
 
 | Suite | Cases | Source | Description |
 |-------|------:|--------|-------------|
@@ -27,14 +27,17 @@ Both `make test-cpp` and `make test-c` exercise the **same 36 embedded cases** v
 | Hand CNN | 7 | `models/test_cnn.nk`, `models/cnn_4x4_single.nk`, `models/cnn_hand.nk` | Small hand-checked CNN forwards |
 | MNIST MLP | 10 | `models/mnist_mlp.nk` | Trained 784→128→10 MLP (98.06% test acc) |
 | MNIST CNN | 10 | `models/mnist_cnn.nk` | Conv+pool+flatten+dense CNN (99.02% test acc) |
+| Op matrix | 13 | `models/op_matrix_mlp.nk`, `models/op_matrix_cnn.nk`, `models/deep_mlp.nk` | Activation sweep + deep-chain synthetic models |
+| Fashion-MNIST MLP | 10 | `models/fashion_mnist_mlp.nk` | Trained 784→128→10 MLP |
+| Fashion-MNIST CNN | 10 | `models/fashion_mnist_cnn.nk` | Conv+pool+flatten+dense CNN |
 
-**Total: 36 passed** when healthy (`16` hand + `10` MNIST MLP + `10` MNIST CNN).
+**Total: 69 passed** when healthy (`16` hand + `10` MNIST MLP + `10` MNIST CNN + `13` op matrix + `20` Fashion-MNIST).
 
 These tests validate **`.nk` parsing, weight loading, and forward inference** against reference outputs embedded in each file (`TCAS` section). See [NK_FORMAT.md](NK_FORMAT.md).
 
 ## Python ONNX parity
 
-`make test-python` runs `python/tests/test_onnx_parity.py`: replays embedded inputs through **`tools/nk_infer`** and **ONNX Runtime** on the matching `.onnx` file (26 cases; `mnist_cnn` excluded until its ONNX sidecar matches).
+`make test-python` runs `python/tests/test_onnx_parity.py`: replays embedded inputs through **`tools/nk_infer`** and **ONNX Runtime** on the matching `.onnx` file (49 cases; `mnist_cnn` and `fashion_mnist_cnn` excluded until ONNX sidecars match).
 
 ```bash
 pip install -e python   # adds onnxruntime
@@ -73,7 +76,10 @@ Sections printed in order:
 1. **MLP TESTS** — hand `.nk` models with embedded cases  
 2. **CNN TESTS** — hand `.nk` models with embedded cases  
 3. **MNIST MLP TESTS** — `models/mnist_mlp.nk`  
-4. **MNIST CNN TESTS** — `models/mnist_cnn.nk`
+4. **MNIST CNN TESTS** — `models/mnist_cnn.nk`  
+5. **OP MATRIX TESTS** — `models/op_matrix_mlp.nk`, `models/op_matrix_cnn.nk`, `models/deep_mlp.nk`  
+6. **FASHION-MNIST MLP TESTS** — `models/fashion_mnist_mlp.nk`  
+7. **FASHION-MNIST CNN TESTS** — `models/fashion_mnist_cnn.nk`
 
 ## Test output
 
@@ -92,7 +98,7 @@ Entry: `./tests/test_c_api` (C23).
 | Parse architecture | MLP and CNN `.nk` metadata |
 | Model load / run | `nk_model_load` + `nk_model_run` on hand MLP/CNN |
 | Hybrid CNN | `nk_parse_architecture` + `nk_cnn_load` on `mnist_cnn.nk` |
-| Full regression | `nk_run_all_tests()` — same **36** embedded cases as C++ |
+| Full regression | `nk_run_all_tests()` — same **69** embedded cases as C++ |
 
 The C API regression path uses the same C++ runner internally (`nk_run_all_tests` → `run_all_tests`).
 
@@ -102,8 +108,11 @@ The C API regression path uses the same C++ runner internally (`nk_run_all_tests
 |------|-----|
 | Hand case | Add to `python/netkit/regression_data.py`, run `make embed-tests`, register `.nk` in `src/test.cpp` if new bundle |
 | ONNX parity case | Add matching `models/<name>.onnx`, convert with `make export-nk`, add pair to `PARITY_PAIRS` in `python/tests/test_onnx_parity.py` |
-| MNIST MLP case | `make export-mnist` (requires numpy) |
-| MNIST CNN case | `make export-mnist-cnn` (requires numpy) |
+| MNIST MLP case | `make export-mnist` (requires PyTorch: `pip install -e "python[train]"`) |
+| MNIST CNN case | `make export-mnist-cnn` (requires PyTorch) |
+| Op matrix models | `make export-op-matrix` (requires numpy) |
+| Fashion-MNIST MLP | `make export-fashion-mnist` (requires PyTorch) |
+| Fashion-MNIST CNN | `make export-fashion-mnist-cnn` (requires PyTorch) |
 
 Always run `make test` before committing.
 
@@ -115,11 +124,15 @@ Weights and embedded tests are **committed** so CI never trains. Regenerate only
 make export-mnist       # MLP — full 60k, 40 epochs (~8s)
 make export-mnist-cnn   # CNN — full 60k, 20 epochs (~18 min)
 make export-mnist-all   # both + refresh ONNX from .nk
+make export-op-matrix   # synthetic activation/deep-chain models + ONNX
+make export-fashion-mnist       # Fashion-MNIST MLP (~30 epochs)
+make export-fashion-mnist-cnn   # Fashion-MNIST CNN (~15 epochs)
+make export-fashion-mnist-all   # both Fashion-MNIST models + ONNX
 make export-nk          # ONNX → .nk + embed hand tests
 make embed-tests        # re-embed hand tests from regression_data.py
 ```
 
-Requires **numpy**. Uses `../python/mnist/*.csv` when present, else downloads IDX files to `data/mnist/`.
+Requires **PyTorch** for training scripts (`pip install -e "python[train]"`). NumPy is used for IDX I/O and packing only. MNIST data from CSV sibling path or IDX download into `data/mnist/`.
 
 ## CI
 

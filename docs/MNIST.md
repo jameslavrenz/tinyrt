@@ -31,7 +31,7 @@ The MNIST suite uses a **2 MiB** dedicated arena in `src/nk_regression.cpp`. See
 
 ## Regenerate
 
-Requires **numpy**. MNIST data from CSV sibling path or IDX download into `data/mnist/`.
+Requires **PyTorch** (`pip install -e "python[train]"`). MNIST data from CSV sibling path or IDX download into `data/mnist/`.
 
 ```bash
 make export-mnist    # train + write mnist_mlp.nk with embedded cases

@@ -18,23 +18,25 @@ def _layers_to_arch(network: str, input_shape: list[int], layers: list[dict]) ->
     for layer in layers:
         kind = layer["kind"]
         if kind == "dense":
-            arch_layers.append(
-                {
-                    "type": "dense",
-                    "units": layer["units"],
-                    "activation": layer["activation"],
-                }
-            )
+            entry = {
+                "type": "dense",
+                "units": layer["units"],
+                "activation": layer["activation"],
+            }
+            if layer.get("activation") == "leaky_relu":
+                entry["alpha"] = float(layer.get("alpha", 0.01))
+            arch_layers.append(entry)
         elif kind == "conv2d":
-            arch_layers.append(
-                {
-                    "type": "conv2d",
-                    "kernel_size": layer["kernel_size"],
-                    "stride": layer["stride"],
-                    "filters": layer["filters"],
-                    "activation": layer["activation"],
-                }
-            )
+            entry = {
+                "type": "conv2d",
+                "kernel_size": layer["kernel_size"],
+                "stride": layer["stride"],
+                "filters": layer["filters"],
+                "activation": layer["activation"],
+            }
+            if layer.get("activation") == "leaky_relu":
+                entry["alpha"] = float(layer.get("alpha", 0.01))
+            arch_layers.append(entry)
         elif kind == "max_pool2d":
             arch_layers.append(
                 {

@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""Train a tutorial-style MNIST CNN with PyTorch and export netkit model + regression cases.
+"""Train a tutorial-style Fashion-MNIST CNN with PyTorch and export netkit model + cases.
 
 Architecture:
   28x28x1 -> Conv3x3x32 ReLU -> MaxPool2x2 -> Conv3x3x64 ReLU -> MaxPool2x2
          -> Flatten -> Dense128 ReLU -> Dense10 Softmax
 
 Run from repo root:
-    python3 tools/export_mnist_cnn.py
+    python3 tools/export_fashion_mnist_cnn.py
 
 Requires: pip install -e "python[train]"
 
 Outputs:
-    models/mnist_cnn.nk (weights + 10 embedded regression cases)
+    models/fashion_mnist_cnn.nk (weights + 10 embedded regression cases)
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "python"))
 
 from netkit import RegressionSuite, write_nk_from_arch
-from netkit.datasets import load_mnist
+from netkit.datasets import load_fashion_mnist
 from netkit.torch_models import TutorialCnn28
 from netkit.torch_pack import assert_packed_matches_reference, forward_cnn_netkit, pack_tutorial_cnn
 from netkit.torch_train import select_digit_cases, train_cnn_classifier
@@ -33,11 +33,11 @@ MODELS = ROOT / "models"
 IMG_H = 28
 IMG_W = 28
 IMG_C = 1
-EPOCHS = 20
+EPOCHS = 15
 BATCH_SIZE = 128
 TRAIN_LIMIT = 0
 LEARNING_RATE = 0.001
-SEED = 42
+SEED = 43
 NUM_CASES = 10
 
 ARCH = {
@@ -57,10 +57,10 @@ ARCH = {
 
 
 def main() -> None:
-    x_train, y_train, x_test, y_test = load_mnist()
+    x_train, y_train, x_test, y_test = load_fashion_mnist()
 
     print(
-        f"Training MNIST CNN on {x_train.shape[0]} images "
+        f"Training Fashion-MNIST CNN on {x_train.shape[0]} images "
         f"(PyTorch Adam lr={LEARNING_RATE}, batch={BATCH_SIZE}, epochs={EPOCHS}) ..."
     )
     print("Architecture: Conv32/ReLU/Pool -> Conv64/ReLU/Pool -> Flatten -> Dense128/ReLU -> Dense10/Softmax")
@@ -84,7 +84,7 @@ def main() -> None:
     test_probs = forward_cnn_netkit(model, x_test, img_h=IMG_H, img_w=IMG_W)
     test_acc = (test_probs.argmax(axis=1) == y_test).mean()
     print(f"Test accuracy: {test_acc * 100:.2f}%")
-    print("Published Keras MNIST CNN tutorials typically report ~98.5–99.3% test accuracy.")
+    print("Published Fashion-MNIST CNN tutorials typically report ~88–93% test accuracy.")
 
     weights = pack_tutorial_cnn(model)
     assert_packed_matches_reference(
@@ -99,14 +99,14 @@ def main() -> None:
         x_test,
         y_test,
         num_cases=NUM_CASES,
-        name_fmt="MNIST CNN digit {digit} (test idx {i})",
+        name_fmt="Fashion-MNIST CNN digit {digit} (test idx {i})",
     )
 
     MODELS.mkdir(parents=True, exist_ok=True)
     nk_path = write_nk_from_arch(
         ARCH,
         weights,
-        MODELS / "mnist_cnn.nk",
+        MODELS / "fashion_mnist_cnn.nk",
         RegressionSuite(tolerance=0.0001, cases=cases),
     )
     print(f"Wrote {nk_path} ({weights.nbytes} bytes, {len(cases)} embedded test cases)")

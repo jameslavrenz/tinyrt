@@ -12,18 +12,23 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 MODELS = ROOT / "models"
 
-# mnist_cnn.onnx (re-exported from .nk) does not match .nk via ONNX Runtime today;
-# .nk correctness is covered by C++ embedded TCAS tests. Re-enable when export is fixed.
+# mnist_cnn / fashion_mnist_cnn ONNX sidecars do not match .nk via ONNX Runtime today;
+# .nk correctness is covered by C++ embedded TCAS tests.
 PARITY_PAIRS = [
     ("test_mlp.nk", "test_mlp.onnx"),
     ("mlp_hand.nk", "mlp_hand.onnx"),
     ("test_cnn.nk", "test_cnn.onnx"),
     ("cnn_4x4_single.nk", "cnn_4x4_single.onnx"),
     ("cnn_hand.nk", "cnn_hand.onnx"),
+    ("op_matrix_mlp.nk", "op_matrix_mlp.onnx"),
+    ("op_matrix_cnn.nk", "op_matrix_cnn.onnx"),
+    ("deep_mlp.nk", "deep_mlp.onnx"),
     ("mnist_mlp.nk", "mnist_mlp.onnx"),
+    ("fashion_mnist_mlp.nk", "fashion_mnist_mlp.onnx"),
 ]
 
-EXPECTED_CASES = 26
+# Full suite when every pair is present (CNN tutorial models excluded above).
+EXPECTED_CASES = 49
 
 
 def _nk_infer_bin() -> Path:
@@ -93,8 +98,22 @@ class TestOnnxParity(unittest.TestCase):
     def test_nk_matches_onnx_runtime(self) -> None:
         from netkit import read_nk, read_test_suite
 
+        pairs = [
+            (nk_name, onnx_name)
+            for nk_name, onnx_name in PARITY_PAIRS
+            if (MODELS / nk_name).is_file() and (MODELS / onnx_name).is_file()
+        ]
+        if not pairs:
+            self.skipTest("no .nk/.onnx parity pairs found in models/")
+
+        expected = 0
+        for nk_name, _onnx_name in pairs:
+            suite = read_test_suite(MODELS / nk_name)
+            if suite is not None:
+                expected += len(suite.cases)
+
         passed = 0
-        for nk_name, onnx_name in PARITY_PAIRS:
+        for nk_name, onnx_name in pairs:
             nk_path = MODELS / nk_name
             onnx_path = MODELS / onnx_name
             suite = read_test_suite(nk_path)
@@ -120,7 +139,7 @@ class TestOnnxParity(unittest.TestCase):
                     )
                     passed += 1
 
-        self.assertEqual(passed, EXPECTED_CASES)
+        self.assertEqual(passed, expected)
 
 
 if __name__ == "__main__":

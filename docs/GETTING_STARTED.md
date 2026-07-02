@@ -15,7 +15,7 @@ Welcome to netkit. This guide takes you from clone to your first inference in a 
 | Compiler (engine) | **C++26** — clang++ 17+, g++ 14+ |
 | Compiler (C API) | **C23** — clang 17+ or gcc 14+ |
 | Build | GNU **Make** |
-| Python packager (optional) | Python 3 + numpy + onnx — `pip install -e python` |
+| Python packager (optional) | Python 3 + numpy + onnx — `pip install -e python`; training scripts also need `pip install -e "python[train]"` (PyTorch) |
 
 Inference is **float32-only** today. float16, int16, int8, and int4 are on the roadmap — [DATATYPES.md](DATATYPES.md).
 
@@ -37,7 +37,7 @@ You get:
 Verify:
 
 ```bash
-make test         # 36 embedded .nk cases (+ Python ONNX parity via make test-python)
+make test         # 69 embedded .nk cases (+ Python ONNX parity via make test-python)
 ```
 
 ---

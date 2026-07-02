@@ -33,8 +33,13 @@ MODEL_NKS = [
     "test_cnn.nk",
     "cnn_4x4_single.nk",
     "cnn_hand.nk",
+    "op_matrix_mlp.nk",
+    "op_matrix_cnn.nk",
+    "deep_mlp.nk",
     "mnist_mlp.nk",
     "mnist_cnn.nk",
+    "fashion_mnist_mlp.nk",
+    "fashion_mnist_cnn.nk",
 ]
 
 
@@ -47,7 +52,13 @@ def netkit_conv_to_onnx(
 
 
 def append_activation(
-    nodes: list, tensor_in: str, activation: str, is_final: bool
+    nodes: list,
+    tensor_in: str,
+    activation: str,
+    is_final: bool,
+    *,
+    alpha: float = 0.01,
+    initializers: list | None = None,
 ) -> str:
     if activation == "relu":
         tensor_out = "output" if is_final else f"{tensor_in}_relu"
@@ -58,6 +69,34 @@ def append_activation(
         nodes.append(
             helper.make_node("Softmax", [tensor_in], [tensor_out], axis=1)
         )
+        return tensor_out
+    if activation == "sigmoid":
+        tensor_out = "output" if is_final else f"{tensor_in}_sigmoid"
+        nodes.append(helper.make_node("Sigmoid", [tensor_in], [tensor_out]))
+        return tensor_out
+    if activation == "tanh":
+        tensor_out = "output" if is_final else f"{tensor_in}_tanh"
+        nodes.append(helper.make_node("Tanh", [tensor_in], [tensor_out]))
+        return tensor_out
+    if activation == "leaky_relu":
+        tensor_out = "output" if is_final else f"{tensor_in}_leaky"
+        nodes.append(
+            helper.make_node("LeakyRelu", [tensor_in], [tensor_out], alpha=float(alpha))
+        )
+        return tensor_out
+    if activation == "relu6":
+        tensor_out = "output" if is_final else f"{tensor_in}_relu6"
+        relu_out = f"{tensor_in}_relu6_pre"
+        min_name = f"{tensor_in}_relu6_min"
+        max_name = f"{tensor_in}_relu6_max"
+        if initializers is not None:
+            initializers.append(numpy_helper.from_array(np.array(0.0, dtype=np.float32), min_name))
+            initializers.append(numpy_helper.from_array(np.array(6.0, dtype=np.float32), max_name))
+            nodes.append(helper.make_node("Relu", [tensor_in], [relu_out]))
+            nodes.append(helper.make_node("Clip", [relu_out, min_name, max_name], [tensor_out]))
+        else:
+            nodes.append(helper.make_node("Relu", [tensor_in], [relu_out]))
+            nodes.append(helper.make_node("Clip", [relu_out], [tensor_out], min=0.0, max=6.0))
         return tensor_out
     return "output" if is_final else tensor_in
 
@@ -96,7 +135,10 @@ def export_mlp(arch: dict, weights: np.ndarray, graph_name: str) -> onnx.ModelPr
                 transB=0,
             )
         )
-        tensor = append_activation(nodes, gemm_out, layer.get("activation", "none"), is_final)
+        tensor = append_activation(
+            nodes, gemm_out, layer.get("activation", "none"), is_final,
+            alpha=float(layer.get("alpha", 0.01)), initializers=initializers,
+        )
         in_features = out_features
 
     graph = helper.make_graph(
@@ -158,7 +200,12 @@ def export_cnn(arch: dict, weights: np.ndarray, graph_name: str) -> onnx.ModelPr
                 )
             )
             tensor = append_activation(
-                nodes, gemm_out, layer.get("activation", "none"), False
+                nodes,
+                gemm_out,
+                layer.get("activation", "none"),
+                False,
+                alpha=float(layer.get("alpha", 0.01)),
+                initializers=initializers,
             )
             spatial_h = (spatial_h - kernel) // stride + 1
             spatial_w = (spatial_w - kernel) // stride + 1
@@ -224,7 +271,12 @@ def export_cnn(arch: dict, weights: np.ndarray, graph_name: str) -> onnx.ModelPr
                 )
             )
             tensor = append_activation(
-                nodes, gemm_out, layer.get("activation", "none"), is_final
+                nodes,
+                gemm_out,
+                layer.get("activation", "none"),
+                is_final,
+                alpha=float(layer.get("alpha", 0.01)),
+                initializers=initializers,
             )
             dense_in = out_features
             layer_idx += 1
@@ -323,7 +375,11 @@ def export_netkit_nk(nk_path: Path) -> None:
 
 def main() -> None:
     for name in MODEL_NKS:
-        export_netkit_nk(MODELS / name)
+        nk_path = MODELS / name
+        if not nk_path.is_file():
+            print(f"Skipping missing {nk_path.name}")
+            continue
+        export_netkit_nk(nk_path)
 
 
 if __name__ == "__main__":

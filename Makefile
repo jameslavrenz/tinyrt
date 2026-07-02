@@ -100,7 +100,9 @@ NK_INFER_SRC = tools/nk_infer.c
 NK_INFER_OBJ = tools/nk_infer.o
 
 .PHONY: all lib clean rebuild test test-cpp test-c test-python run example-c example-cpp examples \
-        export-mnist export-mnist-cnn export-mnist-all export-nk build-all embed-tests \
+        export-mnist export-mnist-cnn export-mnist-all export-op-matrix \
+        export-fashion-mnist export-fashion-mnist-cnn export-fashion-mnist-all \
+        export-nk build-all embed-tests \
         cpu cpu-global mcu mcu-heap mpu mpu-heap
 
 ifeq ($(BUILD_CLI),1)
@@ -157,6 +159,7 @@ endif
 clean:
 	rm -f $(CORE_OBJECTS) $(CLI_OBJECTS) $(EXAMPLE_C_OBJ) $(EXAMPLE_CPP_OBJ) $(TEST_C_OBJ) $(NK_INFER_OBJ) \
 	      $(TARGET) $(LIB) $(EXAMPLE_C) $(EXAMPLE_CPP) $(TEST_C) $(NK_INFER)
+	rm -f src/*.o examples/*.o tests/*.o tools/*.o
 
 rebuild: clean all
 
@@ -217,6 +220,20 @@ export-mnist-cnn:
 
 export-mnist-all: export-mnist export-mnist-cnn
 	PYTHONPATH=python python3 tools/export_onnx_test_models.py
+
+export-op-matrix:
+	PYTHONPATH=python python3 tools/write_op_matrix_models.py
+	PYTHONPATH=python python3 tools/export_onnx_test_models.py
+
+export-fashion-mnist:
+	PYTHONPATH=python python3 tools/export_fashion_mnist_mlp.py
+	PYTHONPATH=python python3 tools/export_onnx_test_models.py
+
+export-fashion-mnist-cnn:
+	PYTHONPATH=python python3 tools/export_fashion_mnist_cnn.py
+	PYTHONPATH=python python3 tools/export_onnx_test_models.py
+
+export-fashion-mnist-all: export-fashion-mnist export-fashion-mnist-cnn
 
 export-onnx-test:
 	PYTHONPATH=python python3 tools/export_onnx_test_models.py

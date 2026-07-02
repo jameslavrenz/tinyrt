@@ -286,6 +286,10 @@ namespace NkLoader
             switch (activation)
             {
                 case NkFormat::Activation::ReLU: return ConvActivationType::ReLU;
+                case NkFormat::Activation::Sigmoid: return ConvActivationType::Sigmoid;
+                case NkFormat::Activation::Tanh: return ConvActivationType::Tanh;
+                case NkFormat::Activation::LeakyReLU: return ConvActivationType::LeakyReLU;
+                case NkFormat::Activation::ReLU6: return ConvActivationType::ReLU6;
                 case NkFormat::Activation::Softmax: return ConvActivationType::Softmax;
                 default: return ConvActivationType::None;
             }

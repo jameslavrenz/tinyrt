@@ -14,6 +14,9 @@ dependencies = [
   "onnxruntime",
 ]
 
+[project.optional-dependencies]
+train = ["torch>=2.0"]
+
 [project.scripts]
 netkit-pack = "netkit.__main__:main"
 
