@@ -25,7 +25,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install Python dependencies
-        run: pip install -e python
+        run: pip install -e "python[train]"
 
       - name: Build
         run: make

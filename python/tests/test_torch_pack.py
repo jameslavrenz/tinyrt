@@ -5,7 +5,12 @@ from __future__ import annotations
 import unittest
 
 import numpy as np
-import torch
+
+try:
+    import torch
+    import torch.nn as nn
+except ImportError:  # pragma: no cover
+    torch = None  # type: ignore[assignment]
 
 from netkit.torch_models import TutorialCnn28, TutorialMlp784
 from netkit.torch_pack import (
@@ -19,6 +24,7 @@ from netkit.torch_pack import (
 )
 
 
+@unittest.skipIf(torch is None, "torch required (pip install -e \"python[train]\")")
 class TestTorchPack(unittest.TestCase):
     def test_dense_layout_matches_matmul(self) -> None:
         linear = torch.nn.Linear(4, 3)
